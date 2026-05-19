@@ -6,6 +6,7 @@
 #define U64 unsigned long long
 
 // enum board squares
+// the squares are assigned according to the big endian convention
 enum squares {
     a8, b8, c8, d8, e8, f8, g8, h8,
     a7, b7, c7, d7, e7, f7, g7, h7,
@@ -23,14 +24,26 @@ enum colors {white, black};
 // bit manipulation section
 
 // operation at bit[square] in the bitboard
-#define setBit(bitboard, square) (bitboard |= (1ULL << square))
-#define getBit(bitboard, square) (bitboard & (1ULL << square))
-#define clearBit(bitboard, square) (bitboard &= ~(1ULL << square))
+inline U64 setBit(U64 *bitboard, int square) {
+    return (*bitboard) |= (1ULL << square);
+}
+
+inline U64 getBit(U64 bitboard, int square) {
+    return bitboard & (1ULL << square);
+}
+
+inline U64 clearBit(U64 *bitboard, int square) {
+    return (*bitboard) &= ~(1ULL << square);
+}
+
+inline int sq(int rank, int file) {
+    return (rank << 3) + file;
+}
 
 void printBitboard(U64 bitboard) {
     for (int rank = 0; rank < 8; ++rank) {
         for (int file = 0; file < 8; ++file) {
-            int square = rank * 8 + file; // square index
+            int square = sq(rank, file); // square index
             // print ranks
             if (!file)
                 printf("  %d ", 8 - rank);
@@ -74,7 +87,7 @@ U64 maskPawnAttacks(int square, int color) {
     // piece bitboard
     U64 bitboard = 0ULL;
     // set piece on board
-    setBit(bitboard, square);
+    setBit(&bitboard, square);
     // white pawns
     if (color == white) {
         attacks |= (bitboard & notFileH) >> 7;
@@ -87,11 +100,12 @@ U64 maskPawnAttacks(int square, int color) {
     }
     return attacks;
 }
+
 // generate knight attacks
 U64 maskKnightAttacks(int square) {
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
-    setBit(bitboard, square);
+    setBit(&bitboard, square);
     if (bitboard & notFileH) {
         attacks |= (bitboard << 17); // down 2 right 1
         attacks |= (bitboard >> 15); // up 2 right 1
@@ -110,11 +124,12 @@ U64 maskKnightAttacks(int square) {
     }
     return attacks;
 }
+
 // generate king attacks
 U64 maskKingAttacks(int square) {
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
-    setBit(bitboard, square);
+    setBit(&bitboard, square);
     if (bitboard & notFileH) {
         attacks |= bitboard << 9;
         attacks |= bitboard << 1;
@@ -129,9 +144,103 @@ U64 maskKingAttacks(int square) {
     attacks |= bitboard >> 8;
     return attacks;
 }
-// generate bishops attack
+
+/* this function produces a mask of the relevant squares when determining how far the bishop can slide
+ *
+ * square - the square that the bishop is on
+ */
 U64 maskBishopAttacks(int square) {
     U64 attacks = 0ULL;
+    int curRank = square / 8;
+    int curFile = square % 8;
+
+    int r, f;
+    for (r = curRank + 1, f = curFile + 1; r <= 6 && f <= 6; ++r, ++f) setBit(&attacks, sq(r, f));
+    for (r = curRank + 1, f = curFile - 1; r <= 6 && f >= 1; ++r, --f) setBit(&attacks, sq(r, f));
+    for (r = curRank - 1, f = curFile + 1; r >= 1 && f <= 6; --r, ++f) setBit(&attacks, sq(r, f));
+    for (r = curRank - 1, f = curFile - 1; r >= 1 && f >= 1; --r, --f) setBit(&attacks, sq(r, f));
+
+    return attacks;
+}
+
+/* this function returns a mask of the squares that a bishop at a certain square can attack
+ *
+ * square - the square that the bishop is on
+ * board - the pieces on the board around the bishop
+ */
+U64 generateBishopAttacks(int square, U64 board) {
+    U64 attacks = 0ULL;
+    int curRank = square / 8;
+    int curFile = square % 8;
+
+    int r, f;
+    for (r = curRank + 1, f = curFile + 1; r <= 7 && f <= 7; ++r, ++f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank + 1, f = curFile - 1; r <= 7 && f >= 0; ++r, --f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank - 1, f = curFile + 1; r >= 0 && f <= 7; --r, ++f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank - 1, f = curFile - 1; r >= 0 && f >= 0; --r, --f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+
+    return attacks;
+}
+
+/* this function produces a mask of the relevant squares when
+ * determining how far the rook can slide
+ *
+ * square - the square that the rook is on
+ */
+U64 maskRookAttacks(int square) {
+    U64 attacks = 0ULL;
+    int curRank = square / 8;
+    int curFile = square % 8;
+
+    int r, f;
+    for (r = curRank + 1, f = curFile; r <= 6; ++r) setBit(&attacks, sq(r, f));
+    for (r = curRank - 1, f = curFile; r >= 1; --r) setBit(&attacks, sq(r, f));
+    for (r = curRank, f = curFile + 1; f <= 6; ++f) setBit(&attacks, sq(r, f));
+    for (r = curRank, f = curFile - 1; f >= 1; --f) setBit(&attacks, sq(r, f));
+
+    return attacks;
+}
+
+/* this function returns a mask of the squares that a rook at a certain square can attack
+ *
+ * square - the square that the rook is on
+ * board - the pieces on the board around the rook
+ */
+U64 generateRookAttacks(int square, U64 board) {
+    U64 attacks = 0ULL;
+    int curRank = square / 8;
+    int curFile = square % 8;
+
+    int r, f;
+    for (r = curRank + 1, f = curFile; r <= 7; ++r) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank - 1, f = curFile; r >= 0; --r) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank, f = curFile + 1; f <= 7; ++f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+    for (r = curRank, f = curFile - 1; f >= 0; --f) {
+        setBit(&attacks, sq(r, f));
+        if (getBit(board, sq(r, f))) break;
+    }
+
     return attacks;
 }
 
@@ -152,9 +261,5 @@ void initAttackTables() {
 
 int main(void) {
     initAttackTables();
-
-    for (int square = 0; square < 64; ++square) {
-        printBitboard(kingAttacksTable[square]);
-    }
     return 0;
 }
