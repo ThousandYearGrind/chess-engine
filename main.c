@@ -24,19 +24,19 @@ enum colors {white, black};
 // bit manipulation section
 
 // operation at bit[square] in the bitboard
-inline U64 setBit(U64 *bitboard, int square) {
+static inline U64 setBit(U64 *bitboard, int square) {
     return (*bitboard) |= (1ULL << square);
 }
 
-inline U64 getBit(U64 bitboard, int square) {
+static inline U64 getBit(U64 bitboard, int square) {
     return bitboard & (1ULL << square);
 }
 
-inline U64 clearBit(U64 *bitboard, int square) {
+static inline U64 clearBit(U64 *bitboard, int square) {
     return (*bitboard) &= ~(1ULL << square);
 }
 
-inline int sq(int rank, int file) {
+static inline int sq(int rank, int file) {
     return (rank << 3) + file;
 }
 

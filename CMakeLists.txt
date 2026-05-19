@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 4.0)
-project(ChessEngine C)
+    cmake_minimum_required(VERSION 4.0)
+    project(ChessEngine C)
 
-set(CMAKE_C_STANDARD 11)
+    set(CMAKE_C_STANDARD 11)
 
-add_executable(ChessEngine main.c)
+    add_executable(ChessEngine main.c)
