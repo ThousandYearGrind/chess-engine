@@ -18,6 +18,17 @@ enum squares {
     a1, b1, c1, d1, e1, f1, g1, h1,
 };
 
+const char * const square_coordinates[] = {
+    "a8", "b8", "c8", "d8", "e8", "f8", "g8", "h8",
+    "a7", "b7", "c7", "d7", "e7", "f7", "g7", "h7",
+    "a6", "b6", "c6", "d6", "e6", "f6", "g6", "h6",
+    "a5", "b5", "c5", "d5", "e5", "f5", "g5", "h5",
+    "a4", "b4", "c4", "d4", "e4", "f4", "g4", "h4",
+    "a3", "b3", "c3", "d3", "e3", "f3", "g3", "h3",
+    "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
+    "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1",
+};
+
 // sides or colors
 enum colors {white, black};
 
@@ -38,6 +49,24 @@ static inline U64 clear_bit(U64 *bitboard, int square) {
 
 static inline int sq(int rank, int file) {
     return (rank << 3) + file;
+}
+
+static inline int count_bits(U64 bitboard) {
+    int count = 0;
+    while (bitboard) {
+        count++;
+        bitboard &= bitboard - 1;
+    }
+    return count;
+}
+
+static inline int get_lsb_index(U64 bitboard) {
+    if (bitboard) {
+        return count_bits((bitboard & -bitboard) - 1);
+    } else {
+        printf("illegal input 0ULL");
+        return -1;
+    }
 }
 
 void print_bitboard(U64 bitboard) {
@@ -263,6 +292,8 @@ int main(void) {
     set_bit(&board, e7);
     set_bit(&board, b4);
     set_bit(&board, g4);
-    print_bitboard(generate_rook_attacks(e4, board));
+
+    U64 x = generate_rook_attacks(e4, board);
+    print_bitboard(x);
     return 0;
 }
