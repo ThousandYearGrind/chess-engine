@@ -284,16 +284,26 @@ void init_attack_tables() {
     }
 }
 
+/*
+ * this function is a map from the binary representation of the parameter <<index>>
+ * to the possible bit arrangements along the relevant bits of the attack mask
+ *
+ * the range of values for index is [0, 2^(bits_in_mask) - 1]
+ */
+U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask) {
+    U64 occupancy = 0ULL;
+
+    for (int count = 0; count < bits_in_mask; ++count) {
+        // get lsb index of attack mask
+        int square = get_lsb_index(attack_mask);
+        clear_bit(&attack_mask, square);
+        if (index & (1 << count)) set_bit(&occupancy, square);
+    }
+    return occupancy;
+}
+
 int main(void) {
     init_attack_tables();
-
-    U64 board = 0ULL;
-    set_bit(&board, e2);
-    set_bit(&board, e7);
-    set_bit(&board, b4);
-    set_bit(&board, g4);
-
-    U64 x = generate_rook_attacks(e4, board);
-    print_bitboard(x);
+    print_bitboard(set_occupancy(1 << 10 - 1, count_bits(mask_rook_attacks(d5)), mask_rook_attacks(d5)));
     return 0;
 }
