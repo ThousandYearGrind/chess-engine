@@ -269,21 +269,6 @@ U64 generate_rook_attacks(int square, U64 board) {
     return attacks;
 }
 
-void init_attack_tables() {
-    for (int square = 0; square < 64; ++square) {
-        // pawn attack tables
-        pawn_attacks_table[white][square] = mask_pawn_attacks(square, white);
-        pawn_attacks_table[black][square] = mask_pawn_attacks(square, black);
-        // knight attack tables
-        knight_attacks_table[square] = mask_knight_attacks(square);
-        // bishop attack tables
-        // rook attack tables
-        // queen attack tables
-        // king attack tables
-        king_attacks_table[square] = mask_king_attacks(square);
-    }
-}
-
 /*
  * this function is a map from the binary representation of the parameter <<index>>
  * to the possible bit arrangements along the relevant bits of the attack mask
@@ -300,6 +285,21 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask) {
         if (index & (1 << count)) set_bit(&occupancy, square);
     }
     return occupancy;
+}
+
+void init_attack_tables() {
+    for (int square = 0; square < 64; ++square) {
+        // pawn attack tables
+        pawn_attacks_table[white][square] = mask_pawn_attacks(square, white);
+        pawn_attacks_table[black][square] = mask_pawn_attacks(square, black);
+        // knight attack tables
+        knight_attacks_table[square] = mask_knight_attacks(square);
+        // bishop attack tables
+        // rook attack tables
+        // queen attack tables
+        // king attack tables
+        king_attacks_table[square] = mask_king_attacks(square);
+    }
 }
 
 int main(void) {
