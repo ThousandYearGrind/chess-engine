@@ -96,6 +96,28 @@ const U64 not_file_h = 9187201950435737471ULL;
 const U64 not_file_ab = not_file_a & not_file_b;
 const U64 not_file_gh = not_file_g & not_file_h;
 
+const int bishop_relevant_bits[64] = {
+    6, 5, 5, 5, 5, 5, 5, 6,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 9, 9, 7, 5, 5,
+    5, 5, 7, 7, 7, 7, 5, 5,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    6, 5, 5, 5, 5, 5, 5, 6,
+};
+
+const int rook_relevant_bits[64] = {
+    12, 11, 11, 11, 11, 11, 11, 12,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    11, 10, 10, 10, 10, 10, 10, 11,
+    12, 11, 11, 11, 11, 11, 11, 12,
+};
+
 // pawn attacks table [color][square]
 U64 pawn_attacks_table[2][64];
 // knight attacks table [square]
@@ -269,7 +291,7 @@ U64 generate_rook_attacks(int square, U64 board) {
     return attacks;
 }
 
-/*
+/*e
  * this function is a map from the binary representation of the parameter <<index>>
  * to the possible bit arrangements along the relevant bits of the attack mask
  *
@@ -304,6 +326,12 @@ void init_attack_tables() {
 
 int main(void) {
     init_attack_tables();
-    print_bitboard(set_occupancy(1 << 10 - 1, count_bits(mask_rook_attacks(d5)), mask_rook_attacks(d5)));
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            int square = sq(rank, file);
+            printf(" %d,", count_bits(mask_rook_attacks(square)));
+        }
+        printf("\n");
+    }
     return 0;
 }
