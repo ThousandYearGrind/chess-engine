@@ -324,14 +324,23 @@ void init_attack_tables() {
     }
 }
 
+// pseudo-random number state
+unsigned int state = 1804289383;
+
+unsigned int get_random_number() {
+    unsigned int num = state;
+
+    // XOR shift 32 algorithm
+    num ^= num << 13;
+    num ^= num >> 17;
+    num ^= num << 5;
+    state = num;
+    return num;
+}
+
+
 int main(void) {
     init_attack_tables();
-    for (int rank = 0; rank < 8; ++rank) {
-        for (int file = 0; file < 8; ++file) {
-            int square = sq(rank, file);
-            printf(" %d,", count_bits(mask_rook_attacks(square)));
-        }
-        printf("\n");
-    }
+    printf("%d", get_random_number());
     return 0;
 }
