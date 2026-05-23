@@ -32,6 +32,37 @@ const char * const square_coordinates[] = {
 // sides or colors
 enum colors {white, black};
 
+// random numbers
+// pseudo-random number state
+unsigned int random_state = 1804289383;
+
+unsigned int get_random_int32_number() {
+    unsigned int num = random_state;
+
+    // XOR shift 32 algorithm
+    num ^= num << 13;
+    num ^= num >> 17;
+    num ^= num << 5;
+    random_state = num;
+    return num;
+}
+
+/*
+ * 64-bit pseudo-legal numbers
+ */
+U64 get_random_U64_numbers() {
+    U64 n1 = ((U64) get_random_int32_number()) & 0xFFFF;
+    U64 n2 = ((U64) get_random_int32_number()) & 0xFFFF;
+    U64 n3 = ((U64) get_random_int32_number()) & 0xFFFF;
+    U64 n4 = ((U64) get_random_int32_number()) & 0xFFFF;
+
+    return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
+}
+
+U64 generate_magic_number() {
+    return get_random_U64_numbers() & get_random_U64_numbers() & get_random_U64_numbers();
+}
+
 // bit manipulation section
 
 // operation at bit[square] in the bitboard
@@ -324,23 +355,7 @@ void init_attack_tables() {
     }
 }
 
-// pseudo-random number state
-unsigned int state = 1804289383;
-
-unsigned int get_random_number() {
-    unsigned int num = state;
-
-    // XOR shift 32 algorithm
-    num ^= num << 13;
-    num ^= num >> 17;
-    num ^= num << 5;
-    state = num;
-    return num;
-}
-
-
 int main(void) {
     init_attack_tables();
-    printf("%d", get_random_number());
     return 0;
 }
