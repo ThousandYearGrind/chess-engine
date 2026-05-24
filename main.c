@@ -32,6 +32,8 @@ const char * const square_coordinates[] = {
 // sides or colors
 enum colors {white, black};
 
+enum {rook, bishop};
+
 // random numbers
 // pseudo-random number state
 unsigned int random_state = 1804289383;
@@ -338,6 +340,13 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask) {
         if (index & (1 << count)) set_bit(&occupancy, square);
     }
     return occupancy;
+}
+
+U64 find_magic__number(int square, int relevant_bits, U64 attack_mask) {
+    U64 occupancies[4096];
+    U64 attacks[4096];
+    U64 used_attacks[4096];
+
 }
 
 void init_attack_tables() {
