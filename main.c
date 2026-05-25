@@ -57,7 +57,6 @@ U64 get_random_U64_numbers() {
     U64 n2 = ((U64) get_random_int32_number()) & 0xFFFF;
     U64 n3 = ((U64) get_random_int32_number()) & 0xFFFF;
     U64 n4 = ((U64) get_random_int32_number()) & 0xFFFF;
-
     return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
 }
 
