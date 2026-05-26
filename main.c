@@ -345,7 +345,6 @@ U64 find_magic__number(int square, int relevant_bits, U64 attack_mask) {
     U64 occupancies[4096];
     U64 attacks[4096];
     U64 used_attacks[4096];
-
 }
 
 void init_attack_tables() {
