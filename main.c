@@ -341,10 +341,18 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask) {
     return occupancy;
 }
 
-U64 find_magic__number(int square, int relevant_bits, U64 attack_mask) {
+U64 find_magic_number(int square, int relevant_bits, int bishop) {
     U64 occupancies[4096];
     U64 attacks[4096];
     U64 used_attacks[4096];
+    U64 attack_mask = bishop ? mask_bishop_attacks(square) : mask_rook_attacks(square);
+
+    int occupancy_indices = 1 << relevant_bits;
+    for (int index = 0; index < occupancy_indices; ++index) {
+
+    }
+
+    return attack_mask;
 }
 
 void init_attack_tables() {
