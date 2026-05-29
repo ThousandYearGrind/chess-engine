@@ -349,7 +349,6 @@ U64 find_magic_number(int square, int relevant_bits, int bishop) {
 
     int occupancy_indices = 1 << relevant_bits;
     for (int index = 0; index < occupancy_indices; ++index) {
-
     }
     return attack_mask;
 }
