@@ -140,6 +140,7 @@ static inline int get_lsb_index(U64 bitboard) {
 }
 
 void print_bitboard(U64 bitboard) {
+    printf("\n");
     for (int rank = 0; rank < 8; ++rank) {
         for (int file = 0; file < 8; ++file) {
             int square = sq(rank, file); // square index
@@ -151,9 +152,40 @@ void print_bitboard(U64 bitboard) {
         printf("\n");
     }
     // print files
-    printf("     a b c d e f g h\n\n");
+    printf("\n     a b c d e f g h\n\n");
     // print the numerical value of the bitboard
     printf("Bitboard: %llu (decimal) \n\n", bitboard);
+}
+
+void print_board() {
+    printf("\n");
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
+            if (file == 0) {
+                printf("  %d ", 8 - rank);
+            }
+            int square = sq(rank, file);
+            int piece = -1;
+
+            for (int bbs_index = wp; bbs_index <= bk; ++bbs_index) {
+                if (get_bit(bitboards[bbs_index], square)) {
+                    piece = bbs_index;
+                    break;
+                }
+            }
+
+            printf(" %c", (piece == -1) ? '.' : ascii_pieces[piece]);
+        }
+        printf("\n");
+    }
+    printf("\n     a b c d e f g h\n\n");
+    printf("     Side:     %s\n", (side == white) ? "white" : side == black ? "black" : "0");
+    printf("     En passant:  %s\n", (en_passant == no_square) ? "no" : square_coordinates[en_passant]);
+    printf("     Castling:  %c%c%c%c\n\n",
+        (castle & wk) ? 'K' : '-',
+        (castle & wq) ? 'Q' : '-',
+        (castle & bk) ? 'k' : '-',
+        (castle & bq) ? 'q' : '-');
 }
 
 // attacks section
@@ -617,11 +649,49 @@ int main(void) {
     init_sliders_attacks(bishop);
     init_sliders_attacks(rook);
 
+    set_bit(&bitboards[wp], a2);
+    set_bit(&bitboards[wp], b2);
+    set_bit(&bitboards[wp], c2);
+    set_bit(&bitboards[wp], d2);
     set_bit(&bitboards[wp], e2);
-    print_bitboard(bitboards[wp]);
+    set_bit(&bitboards[wp], f2);
+    set_bit(&bitboards[wp], g2);
+    set_bit(&bitboards[wp], h2);
+    set_bit(&bitboards[wn], b1);
+    set_bit(&bitboards[wn], g1);
+    set_bit(&bitboards[wr], a1);
+    set_bit(&bitboards[wr], h1);
+    set_bit(&bitboards[wb], c1);
+    set_bit(&bitboards[wb], f1);
+    set_bit(&bitboards[wk], e1);
+    set_bit(&bitboards[wq], d1);
 
-    printf("piece: %c\n", ascii_pieces[wp]);
-    printf("piece: %d\n", char_pieces['P']);
+    set_bit(&bitboards[bp], a7);
+    set_bit(&bitboards[bp], b7);
+    set_bit(&bitboards[bp], c7);
+    set_bit(&bitboards[bp], d7);
+    set_bit(&bitboards[bp], e7);
+    set_bit(&bitboards[bp], f7);
+    set_bit(&bitboards[bp], g7);
+    set_bit(&bitboards[bp], h7);
+    set_bit(&bitboards[bn], b8);
+    set_bit(&bitboards[bn], g8);
+    set_bit(&bitboards[br], a8);
+    set_bit(&bitboards[br], h8);
+    set_bit(&bitboards[bb], c8);
+    set_bit(&bitboards[bb], f8);
+    set_bit(&bitboards[bk], e8);
+    set_bit(&bitboards[bq], d8);
+
+    side = white;
+    en_passant = e3;
+    castle = wk | wq | bk | bq;
+
+    print_board();
+
+    for (int i = wp; i <= bk; i++) {
+        print_bitboard(bitboards[i]);
+    }
 
     return 0;
 }
