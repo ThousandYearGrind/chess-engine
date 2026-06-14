@@ -6,6 +6,13 @@
 #include <string.h>
 #define U64 unsigned long long
 
+// FEN dedug positions
+#define empty_board "8/8/8/8/8/8/8/8 w - - "
+#define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
+#define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
+#define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
+#define cmk_position "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 "
+
 // enum board squares
 // the squares are assigned according to the big endian convention
 enum squares {
@@ -57,7 +64,7 @@ int char_pieces[] = {
 
 // bitboards
 U64 bitboards[12];
-U64 occuapncies[3];
+U64 occupancies[3];
 
 // side to move
 int side = -1;
@@ -186,6 +193,76 @@ void print_board() {
         (castle & wq) ? 'Q' : '-',
         (castle & bk) ? 'k' : '-',
         (castle & bq) ? 'q' : '-');
+}
+
+void parse_fen(char *fen) {
+    memset(bitboards, 0ULL, sizeof(bitboards));
+    memset(occupancies, 0ULL, sizeof(occupancies));
+
+    side = 0;
+    en_passant = no_square;
+    castle = 0;
+
+    for (int rank = 0; rank < 8; rank++) {
+        for (int file = 0; file < 8;) {
+            int square = sq(rank, file);
+            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
+                int piece = char_pieces[*fen];
+                set_bit(&bitboards[piece], square);
+                file++;
+                fen++;
+            }
+            else if (*fen >= '0' && *fen <= '9') {
+                int offset = *fen - '0';
+                file += offset;
+                fen++;
+            }
+        }
+
+        if (*fen == '/') fen++;
+    }
+
+    fen++;
+    side = (*fen++ == 'w') ? white : black;
+
+    fen++;
+    while (*fen != ' ') {
+        switch (*fen) {
+            case 'K':
+                castle |= wkc;
+                break;
+            case 'Q':
+                castle |= wqc;
+                break;
+            case 'k':
+                castle |= bkc;
+                break;
+            case 'q':
+                castle |= bqc;
+                break;
+        }
+        fen++;
+    }
+
+    fen++;
+    if (*fen != '-') {
+        int rank = 8 - (fen[1] - '0');
+        int file = fen[0] - 'a';
+        en_passant = sq(rank, file);
+    }
+    else {
+        en_passant = no_square;
+    }
+
+    for (int piece = wp; piece <= wk; piece++) {
+        occupancies[white] |= bitboards[piece];
+    }
+
+    for (int piece = bp; piece <= bk; piece++) {
+        occupancies[black] |= bitboards[piece];
+    }
+
+    occupancies[both] = occupancies[white] | occupancies[black];
 }
 
 // attacks section
@@ -652,53 +729,5 @@ int main(void) {
     init_attack_tables();
     init_sliders_attacks(bishop);
     init_sliders_attacks(rook);
-    init_sliders_attacks(queen);
-
-    set_bit(&bitboards[wp], a2);
-    set_bit(&bitboards[wp], b2);
-    set_bit(&bitboards[wp], c2);
-    set_bit(&bitboards[wp], d2);
-    set_bit(&bitboards[wp], e2);
-    set_bit(&bitboards[wp], f2);
-    set_bit(&bitboards[wp], g2);
-    set_bit(&bitboards[wp], h2);
-    set_bit(&bitboards[wn], b1);
-    set_bit(&bitboards[wn], g1);
-    set_bit(&bitboards[wr], a1);
-    set_bit(&bitboards[wr], h1);
-    set_bit(&bitboards[wb], c1);
-    set_bit(&bitboards[wb], f1);
-    set_bit(&bitboards[wk], e1);
-    set_bit(&bitboards[wq], d1);
-
-    set_bit(&bitboards[bp], a7);
-    set_bit(&bitboards[bp], b7);
-    set_bit(&bitboards[bp], c7);
-    set_bit(&bitboards[bp], d7);
-    set_bit(&bitboards[bp], e7);
-    set_bit(&bitboards[bp], f7);
-    set_bit(&bitboards[bp], g7);
-    set_bit(&bitboards[bp], h7);
-    set_bit(&bitboards[bn], b8);
-    set_bit(&bitboards[bn], g8);
-    set_bit(&bitboards[br], a8);
-    set_bit(&bitboards[br], h8);
-    set_bit(&bitboards[bb], c8);
-    set_bit(&bitboards[bb], f8);
-    set_bit(&bitboards[bk], e8);
-    set_bit(&bitboards[bq], d8);
-
-    side = white;
-    en_passant = e3;
-    castle = wk | wq | bk | bq;
-
-    print_board();
-
-    for (int i = wp; i <= bk; i++) {
-        print_bitboard(bitboards[i]);
-    }
-
-
-    print_bitboard(get_queen_attacks(e4, 0ULL));
     return 0;
 }
