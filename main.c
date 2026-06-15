@@ -730,8 +730,22 @@ void init_attack_tables() {
 }
 
 static inline int is_sq_attacked(int square, int side) {
-    if ((side == white) && (pawn_attacks_table[black][square] & bitboards[wp])) return 1;
-    else if ((side == black) && (pawn_attacks_table[white][square] & bitboards[bp])) return 1;
+    if (side == white) {
+        // if an enemy piece on the given square would attack one of our own pieces
+        // of the same type, then our piece is attacking that square
+        if (pawn_attacks_table[black][square] & bitboards[wp]) return 1;
+        if (knight_attacks_table[square] & bitboards[wn]) return 1;
+        if (king_attacks_table[square] & bitboards[wk]) return 1;
+        if (get_bishop_attacks(square, occupancies[both]) & (bitboards[wb] | bitboards[wq])) return 1;
+        if (get_rook_attacks(square, occupancies[both]) & (bitboards[wr] | bitboards[wq])) return 1;
+    }
+    else if (side == black) {
+        if (pawn_attacks_table[white][square] & bitboards[bp]) return 1;
+        if (knight_attacks_table[square] & bitboards[bn]) return 1;
+        if (king_attacks_table[square] & bitboards[bk]) return 1;
+        if (get_bishop_attacks(square, occupancies[both]) & (bitboards[bb] | bitboards[bq])) return 1;
+        if (get_rook_attacks(square, occupancies[both]) & (bitboards[br] | bitboards[bq])) return 1;
+    }
     return 0;
 }
 
@@ -751,10 +765,10 @@ void print_attacked_squares(int side) {
 int main(void) {
     init_attack_tables();
 
-    parse_fen("8/8/8/3p4/8/8/3P4/8 w - - ");
+    parse_fen("8/8/8/3B4/8/8/8/8 w - - ");
     print_board();
+    print_bitboard(occupancies[both]);
 
     print_attacked_squares(white);
-    print_attacked_squares(black);
     return 0;
 }
