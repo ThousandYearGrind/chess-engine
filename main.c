@@ -729,16 +729,32 @@ void init_attack_tables() {
     init_sliders_attacks(rook);
 }
 
+static inline int is_sq_attacked(int square, int side) {
+    if ((side == white) && (pawn_attacks_table[black][square] & bitboards[wp])) return 1;
+    else if ((side == black) && (pawn_attacks_table[white][square] & bitboards[bp])) return 1;
+    return 0;
+}
+
+void print_attacked_squares(int side) {
+    for (int rank = 0; rank < 8; rank++) {
+        for (int file = 0; file < 8; file++) {
+            int square = sq(rank, file);
+            if (!file) printf("  %d ", 8 - rank);
+            printf(" %d", is_sq_attacked(square, side));
+        }
+        printf("\n");
+    }
+
+    printf("\n     a b c d e f g h\n\n");
+}
+
 int main(void) {
     init_attack_tables();
 
-    parse_fen(start_position);
+    parse_fen("8/8/8/3p4/8/8/3P4/8 w - - ");
     print_board();
-    parse_fen(tricky_position);
-    print_board();
-    parse_fen(killer_position);
-    print_board();
-    parse_fen(cmk_position);
-    print_board();
+
+    print_attacked_squares(white);
+    print_attacked_squares(black);
     return 0;
 }
