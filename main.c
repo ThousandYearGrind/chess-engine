@@ -729,6 +729,8 @@ void init_attack_tables() {
     init_sliders_attacks(rook);
 }
 
+// move generator
+
 static inline int is_sq_attacked(int square, int side) {
     if (side == white) {
         // if an enemy piece on the given square would attack one of our own pieces
@@ -760,6 +762,22 @@ void print_attacked_squares(int side) {
     }
 
     printf("\n     a b c d e f g h\n\n");
+}
+
+// generate all moves
+static inline void generate_moves() {
+    int source_square, target_square;
+    // current piece's bitboard and attacks
+    U64 bitboard, attacks;
+    for (int piece = wp; piece <= bk; piece++) {
+        bitboard = bitboards[piece];
+        // generate white pawns and white king castling moves
+        if (side == white) {
+        }
+        // generate black pawns and black king castling moves
+        else {
+        }
+    }
 }
 
 int main(void) {
