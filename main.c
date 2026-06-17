@@ -771,11 +771,54 @@ static inline void generate_moves() {
     U64 bitboard, attacks;
     for (int piece = wp; piece <= bk; piece++) {
         bitboard = bitboards[piece];
+
         // generate white pawns and white king castling moves
         if (side == white) {
+            if (piece == wp) {
+                while (bitboard) {
+                    source_square = get_lsb_index(bitboard);
+                    target_square = source_square - 8;
+                    if (!(target_square < a8) && !get_bit(occupancies[both], target_square)) {
+                        // promotion
+                        if (source_square >= a7 && source_square <= h7) {
+                            // add move into a move list
+                            printf("white pawn promotion: %s%sq\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn promotion: %s%sr\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn promotion: %s%sb\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn promotion: %s%sn\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        } else {
+                            printf("white pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            if ((source_square >= a2 && source_square <= h2) && !get_bit(occupancies[both], target_square - 8))
+                                printf("white double pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square - 8]);
+                        }
+                    }
+                    clear_bit(&bitboard, source_square);
+                }
+            }
         }
         // generate black pawns and black king castling moves
         else {
+            if (piece == bp) {
+                while (bitboard) {
+                    source_square = get_lsb_index(bitboard);
+                    target_square = source_square + 8;
+                    if (!(target_square > h1) && !get_bit(occupancies[both], target_square)) {
+                        // promotion
+                        if (source_square >= a2 && source_square <= h2) {
+                            // add move into a move list
+                            printf("black pawn promotion: %s%sq\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn promotion: %s%sr\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn promotion: %s%sb\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn promotion: %s%sn\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        } else {
+                            printf("black pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            if ((source_square >= a7 && source_square <= h7) && !get_bit(occupancies[both], target_square + 8))
+                                printf("black double pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square + 8]);
+                        }
+                    }
+                    clear_bit(&bitboard, source_square);
+                }
+            }
         }
     }
 }
@@ -783,10 +826,8 @@ static inline void generate_moves() {
 int main(void) {
     init_attack_tables();
 
-    parse_fen("8/8/8/3B4/8/8/8/8 w - - ");
+    parse_fen("r3k2r/pPppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPpP/R3K2R b KQkq - 0 1 ");
     print_board();
-    print_bitboard(occupancies[both]);
-
-    print_attacked_squares(white);
+    generate_moves();
     return 0;
 }
