@@ -995,12 +995,50 @@ static inline void generate_moves() {
  * 1000 0000 0000 0000 0000 0000    castling flag               0x800000
  */
 
+enum {
+    SOURCE = 0x3f, TARGET = 0xfc0, PIECE = 0xf000, PROMOTED = 0xf0000, CAPTURE = 0x100000, DOUBLE_PUSH = 0x200000, EN_PASSANT = 0x400000, CASTLING = 0x800000
+};
+
+static inline int encode_move(int source, int target, int piece, int promoted, int capture, int double_push, int enpassant, int castling) {
+    return source | target << 6 | piece << 12 | promoted << 16 | capture << 20 | double_push << 21 | enpassant << 22 | castling << 23;
+}
+
+static inline int get_move_source(int move) {
+    return move & SOURCE;
+}
+
+static inline int get_move_target(int move) {
+    return (move & TARGET) >> 6;
+}
+
+static inline int get_move_piece(int move) {
+    return (move & PIECE) >> 12;
+}
+
+static inline int get_move_promoted(int move) {
+    return (move & PROMOTED) >> 16;
+}
+
+static inline int get_move_capture(int move) {
+    return (move & CAPTURE) >> 20;
+}
+
+static inline int get_move_double_push(int move) {
+    return (move & DOUBLE_PUSH) >> 21;
+}
+
+static inline int get_move_en_passant(int move) {
+    return (move & EN_PASSANT) >> 22;
+}
+
+static inline int get_move_castling(int move) {
+    return (move & CASTLING) >> 23;
+}
+
 int main(void) {
     init_attack_tables();
 
     parse_fen("r3k2r/p4p2/1b5p/5Ppb/3PBB1Q/5NPq/nPP3RP/RN2K3 b Qkq - 1 21");
     print_board();
-
-    int move = 0;
     return 0;
 }
