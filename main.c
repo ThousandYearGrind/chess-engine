@@ -815,6 +815,24 @@ static inline void generate_moves() {
                     clear_bit(&bitboard, source_square);
                 }
             }
+            if (piece == wk) {
+                if (castle & wkc) {
+                    if (!get_bit(occupancies[both], f1) && !get_bit(occupancies[both], g1)) {
+                        if (!is_sq_attacked(e1, black) && !is_sq_attacked(f1, black) && !is_sq_attacked(g1, black)) {
+                            printf("white kingside castle: O-O\n");
+                        }
+                    }
+                }
+                if (castle & wqc) {
+                    if (!get_bit(occupancies[both], b1) && !get_bit(occupancies[both], c1)
+                        && !get_bit(occupancies[both], d1)) {
+                        if (!is_sq_attacked(e1, black) && !is_sq_attacked(d1, black)
+                            && !is_sq_attacked(c1, black)) {
+                            printf("white queenside castle: O-O-O\n");
+                        }
+                    }
+                }
+            }
         }
         // generate black pawns and black king castling moves
         else {
@@ -859,15 +877,130 @@ static inline void generate_moves() {
                     clear_bit(&bitboard, source_square);
                 }
             }
+            if (piece == bk) {
+                if (castle & bkc) {
+                    if (!get_bit(occupancies[both], f8) && !get_bit(occupancies[both], g8)) {
+                        if (!is_sq_attacked(e8, white) && !is_sq_attacked(f8, white)
+                            && !is_sq_attacked(g8, white)) {
+                            printf("black kingside castle: O-O\n");
+                        }
+                    }
+                }
+                if (castle & bqc) {
+                    if (!get_bit(occupancies[both], b8) && !get_bit(occupancies[both], c8) && !get_bit(occupancies[both], d8)) {
+                        if (!is_sq_attacked(e8, white) && !is_sq_attacked(d8, white) &&
+                            !is_sq_attacked(c8, white)) {
+                            printf("black queenside castle: O-O-O\n");
+                            }
+                    }
+                }
+            }
+        }
+        if (side == white ? piece == wn : piece == bn) {
+            while (bitboard) {
+                source_square = get_lsb_index(bitboard);
+                attacks = knight_attacks_table[source_square] & ~occupancies[side == white ? white : black];
+                while (attacks) {
+                    target_square = get_lsb_index(attacks);
+                    if (!get_bit(side == white ? occupancies[black] : occupancies[white], target_square))
+                        printf("%s knight quiet move: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    else
+                        printf("%s knight capture: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    clear_bit(&attacks, target_square);
+                }
+                clear_bit(&bitboard, source_square);
+            }
+        }
+        if (side == white ? piece == wb : piece == bb) {
+            while (bitboard) {
+                source_square = get_lsb_index(bitboard);
+                attacks = get_bishop_attacks(source_square, occupancies[both]) & ~occupancies[side == white ? white : black];
+                while (attacks) {
+                    target_square = get_lsb_index(attacks);
+                    if (!get_bit(side == white ? occupancies[black] : occupancies[white], target_square))
+                        printf("%s bishop quiet move: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    else
+                        printf("%s bishop capture: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    clear_bit(&attacks, target_square);
+                }
+                clear_bit(&bitboard, source_square);
+            }
+        }
+        if (side == white ? piece == wr : piece == br) {
+            while (bitboard) {
+                source_square = get_lsb_index(bitboard);
+                attacks = get_rook_attacks(source_square, occupancies[both]) & ~occupancies[side == white ? white : black];
+                while (attacks) {
+                    target_square = get_lsb_index(attacks);
+                    if (!get_bit(side == white ? occupancies[black] : occupancies[white], target_square))
+                        printf("%s rook quiet move: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    else
+                        printf("%s rook capture: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    clear_bit(&attacks, target_square);
+                }
+                clear_bit(&bitboard, source_square);
+            }
+        }
+        if (side == white ? piece == wq : piece == bq) {
+            while (bitboard) {
+                source_square = get_lsb_index(bitboard);
+                attacks = get_queen_attacks(source_square, occupancies[both]) & ~occupancies[side == white ? white : black];
+                while (attacks) {
+                    target_square = get_lsb_index(attacks);
+                    if (!get_bit(side == white ? occupancies[black] : occupancies[white], target_square))
+                        printf("%s queen quiet move: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    else
+                        printf("%s queen capture: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    clear_bit(&attacks, target_square);
+                }
+                clear_bit(&bitboard, source_square);
+            }
+        }
+        if (side == white ? piece == wk : piece == bk) {
+            while (bitboard) {
+                source_square = get_lsb_index(bitboard);
+                attacks = king_attacks_table[source_square] & ~occupancies[side == white ? white : black];
+                while (attacks) {
+                    target_square = get_lsb_index(attacks);
+                    if (!get_bit(side == white ? occupancies[black] : occupancies[white], target_square))
+                        printf("%s king quiet move: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    else
+                        printf("%s king capture: %s%s\n", side == white ? "white" : "black",
+                            square_coordinates[source_square], square_coordinates[target_square]);
+                    clear_bit(&attacks, target_square);
+                }
+                clear_bit(&bitboard, source_square);
+            }
         }
     }
 }
 
+/*                                                           hex
+ * 0000 0000 0000 0000 0011 1111    source square               0x3f
+ * 0000 0000 0000 1111 1100 0000    target square               0xfc0
+ * 0000 0000 1111 0000 0000 0000    piece                       0xf000
+ * 0000 1111 0000 0000 0000 0000    promoted piece              0xf0000
+ * 0001 0000 0000 0000 0000 0000    capture flag                0x100000
+ * 0010 0000 0000 0000 0000 0000    double push flag            0x200000
+ * 0100 0000 0000 0000 0000 0000    en passant flag             0x400000
+ * 1000 0000 0000 0000 0000 0000    castling flag               0x800000
+ */
+
 int main(void) {
     init_attack_tables();
 
-    parse_fen("r3k2r/pPppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq a3 0 1 ");
+    parse_fen("r3k2r/p4p2/1b5p/5Ppb/3PBB1Q/5NPq/nPP3RP/RN2K3 b Qkq - 1 21");
     print_board();
-    generate_moves();
+
+    int move = 0;
     return 0;
 }
