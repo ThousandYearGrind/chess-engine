@@ -792,6 +792,26 @@ static inline void generate_moves() {
                                 printf("white double pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square - 8]);
                         }
                     }
+                    attacks = pawn_attacks_table[side][source_square] & occupancies[black];
+                    while (attacks) {
+                        target_square = get_lsb_index(attacks);
+                        if (source_square >= a7 && source_square <= h7) {
+                            printf("white pawn capture promotion: %s%sq\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn capture promotion: %s%sr\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn capture promotion: %s%sb\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("white pawn capture promotion: %s%sn\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        } else {
+                            printf("white pawn capture: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        }
+                        clear_bit(&attacks, target_square);
+                    }
+                    if (en_passant != no_square) {
+                        U64 en_passant_attacks = pawn_attacks_table[side][source_square] & (1ULL << en_passant);
+                        if (en_passant_attacks) {
+                            target_square = get_lsb_index(en_passant_attacks);
+                            printf("white en passant capture: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        }
+                    }
                     clear_bit(&bitboard, source_square);
                 }
             }
@@ -816,6 +836,26 @@ static inline void generate_moves() {
                                 printf("black double pawn push: %s%s\n", square_coordinates[source_square], square_coordinates[target_square + 8]);
                         }
                     }
+                    attacks = pawn_attacks_table[side][source_square] & occupancies[white];
+                    while (attacks) {
+                        target_square = get_lsb_index(attacks);
+                        if (source_square >= a2 && source_square <= h2) {
+                            printf("black pawn capture promotion: %s%sq\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn capture promotion: %s%sr\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn capture promotion: %s%sb\n", square_coordinates[source_square], square_coordinates[target_square]);
+                            printf("black pawn capture promotion: %s%sn\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        } else {
+                            printf("black pawn capture: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        }
+                        clear_bit(&attacks, target_square);
+                    }
+                    if (en_passant != no_square) {
+                        U64 en_passant_attacks = pawn_attacks_table[side][source_square] & (1ULL << en_passant);
+                        if (en_passant_attacks) {
+                            target_square = get_lsb_index(en_passant_attacks);
+                            printf("black en passant capture: %s%s\n", square_coordinates[source_square], square_coordinates[target_square]);
+                        }
+                    }
                     clear_bit(&bitboard, source_square);
                 }
             }
@@ -826,7 +866,7 @@ static inline void generate_moves() {
 int main(void) {
     init_attack_tables();
 
-    parse_fen("r3k2r/pPppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPpP/R3K2R b KQkq - 0 1 ");
+    parse_fen("r3k2r/pPppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R b KQkq a3 0 1 ");
     print_board();
     generate_moves();
     return 0;
