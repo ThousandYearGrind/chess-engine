@@ -1035,10 +1035,58 @@ static inline int get_move_castling(int move) {
     return (move & CASTLING) >> 23;
 }
 
+typedef struct {
+    int moves[256];
+    int count;
+} moves;
+
+static inline void add_move(moves *move_list, int move) {
+    move_list->moves[move_list->count++] = move;
+}
+
+char promoted_pieces[] = {
+    [wq] = 'Q',
+    [wr] = 'R',
+    [wb] = 'B',
+    [wn] = 'N',
+    [wp] = 'P',
+    [wk] = 'K',
+    [bq] = 'q',
+    [br] = 'r',
+    [bb] = 'b',
+    [bn] = 'n',
+    [bp] = 'p',
+    [bk] = 'k'
+};
+
+void print_move(int move) {
+    printf("%s%s%c", square_coordinates[get_move_source(move)],
+        square_coordinates[get_move_target(move)],
+        promoted_pieces[get_move_promoted(move)]);
+}
+
+void print_move_list(moves *move_list) {
+    printf("\n    move  piece  capture  double  enpassant  castling\n");
+    for (int move_count = 0; move_count < move_list->count; move_count++) {
+        int move = move_list->moves[move_count];
+        printf("    %s%s  %c      %d        %d       %d          s%d\n", square_coordinates[get_move_source(move)],
+            square_coordinates[get_move_target(move)],
+            promoted_pieces[get_move_promoted(move)],
+            get_move_capture(move),
+            get_move_double_push(move),
+            get_move_en_passant(move),
+            get_move_castling(move));
+    }
+}
+
+// print move
+
 int main(void) {
     init_attack_tables();
+    moves move_list[1];
+    move_list->count = 0;
+    add_move(move_list, encode_move(d6, e7, wp, wp, 1, 0, 0, 0));
+    print_move_list(move_list);
 
-    parse_fen("r3k2r/p4p2/1b5p/5Ppb/3PBB1Q/5NPq/nPP3RP/RN2K3 b Qkq - 1 21");
-    print_board();
     return 0;
 }
