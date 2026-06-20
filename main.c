@@ -841,7 +841,7 @@ static inline void add_move(moves *move_list, int move) {
 void print_move(int move) {
     printf("%s%s%c", square_coordinates[get_move_source(move)],
         square_coordinates[get_move_target(move)],
-        promoted_pieces[get_move_promoted(move)]);
+        get_move_promoted(move) == 0 ? ' ' : promoted_pieces[get_move_promoted(move)]);
 }
 
 void print_move_list(moves *move_list) {
@@ -884,21 +884,102 @@ void print_move_list(moves *move_list) {
 // mvoe types
 enum { all_moves, only_captures };
 
+const int castling_rights[64] = {
+    7, 15, 15, 15, 3, 15, 15, 11,
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    15, 15, 15, 15, 15, 15, 15, 15, 
+    13, 15, 15, 15, 12, 15, 15, 14, 
+};
+
 static inline int make_move(int move, int move_flag) {
     if (move_flag == all_moves) {
         copy_board();
 
-        int source_square = get_move_source(move);
-        int target_square = get_move_target(move);
-        int piece = get_move_piece(move);
-        int promoted = get_move_promoted(move);
-        int capture = get_move_capture(move);
-        int double_push = get_move_double_push(move);
-        int en_passant = get_move_en_passant(move);
-        int castling = get_move_castling(move);
+        int this_source_square = get_move_source(move);
+        int this_target_square = get_move_target(move);
+        int this_piece = get_move_piece(move);
+        int this_promoted_piece = get_move_promoted(move);
+        int this_capture = get_move_capture(move);
+        int this_double_push = get_move_double_push(move);
+        int this_en_passant = get_move_en_passant(move);
+        int this_castling = get_move_castling(move);
 
-        clear_bit(&bitboards[piece], source_square);
-        set_bit(&bitboards[piece], target_square);
+        clear_bit(&bitboards[this_piece], this_source_square);
+        set_bit(&bitboards[this_piece], this_target_square);
+
+        if (this_capture) {
+            int start_piece, end_piece;
+            if (side == white) {
+                start_piece = bp;
+                end_piece = bk;
+            }
+            else {
+                start_piece = wp;
+                end_piece = wk;
+            }
+
+            for (int i_piece = start_piece; i_piece < end_piece; i_piece++) {
+                if (get_bit(bitboards[i_piece], this_target_square)) {
+                    clear_bit(&bitboards[i_piece], this_target_square);
+                    break;
+                }
+            }
+        }
+
+        if (this_promoted_piece) {
+            clear_bit(&bitboards[(side == white) ? wp : bp], this_target_square);
+            set_bit(&bitboards[this_promoted_piece], this_target_square);
+        }
+
+        if (this_en_passant) {
+            if (side == white) clear_bit(&bitboards[bp], this_target_square + 8) ;
+            else clear_bit(&bitboards[wp], this_target_square - 8);
+        }
+
+        en_passant = no_square;
+
+        if (this_double_push) {
+            if (side == white) en_passant = this_target_square + 8;
+            else en_passant = this_target_square - 8;
+        }
+
+        if (this_castling) {
+            switch (this_target_square) {
+            case g1:
+                clear_bit(&bitboards[wr], h1);
+                set_bit(&bitboards[wr], f1);
+                break;
+            case c1:
+                clear_bit(&bitboards[wr], a1);
+                set_bit(&bitboards[wr], d1);
+                break;
+            case g8:
+                clear_bit(&bitboards[br], h8);
+                set_bit(&bitboards[br], f8);
+                break;
+            case c8:
+                clear_bit(&bitboards[br], a8);
+                set_bit(&bitboards[br], d8);
+                break;
+            }
+        }
+        castle &= castling_rights[this_source_square];
+        castle &= castling_rights[this_target_square];
+        occupancies[white] = bitboards[wp] | bitboards[wb] | bitboards[wr] | bitboards[wn] | bitboards[wq] | bitboards[wk];
+        occupancies[black] = bitboards[bp] | bitboards[bb] | bitboards[br] | bitboards[bn] | bitboards[bq] | bitboards[bk];
+        occupancies[both] = occupancies[white] | occupancies[black];
+
+        side ^= 1;
+
+        if (is_sq_attacked(side == white ? get_lsb_index(bitboards[bk]) : get_lsb_index(bitboards[wk]), side)) {
+            restore_board();
+            return 0;
+        }
+        else return 1;
     }
     // capture moves
     else {
@@ -1156,19 +1237,33 @@ static inline void generate_moves(moves *move_list) {
     }
 }
 
+static inline U64 occ(int side) {
+    U64 ans = 0;
+    if (side == white) {
+        for (int i = wp; i <= wk; i++) {
+            ans |= bitboards[i];
+        }
+    } else {
+        for (int i = bp; i <= bk; i++) {
+            ans |= bitboards[i];
+        }
+    }
+    return ans;
+}
+
 int main(void) {
     init_attack_tables();
-    parse_fen(tricky_position);
+    parse_fen("r3k2r/p11pqpb1/bn2pnp1/2pPN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R w KQkq a3 0 1 ");
     print_board();
 
-    moves move_list[2];
+    moves move_list[1];
 
     generate_moves(move_list);
     for (int move_count = 0; move_count < move_list->count; move_count++) {
         int move = move_list->moves[move_count];
         copy_board();
 
-        make_move(move, all_moves);
+        if (!make_move(move, all_moves)) continue;
         print_board();
         print_move(move);
         getchar();
