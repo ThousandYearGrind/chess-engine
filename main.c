@@ -7,7 +7,7 @@
 #define U64 unsigned long long
 
 // FEN dedug positions
-#define empty_board "8/8/8/8/8/8/8/8 w - - "
+#define empty_board "8/8/8/8/8/8/8/8 b - - "
 #define start_position "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "
 #define tricky_position "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 "
 #define killer_position "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1"
@@ -867,6 +867,20 @@ void print_move_list(moves *move_list) {
     printf("\n\n    Total number of moves: %d\n\n", move_list->count);
 }
 
+// sizeof(bitboards) = 96 
+// sizeof(occupancies) = 24 
+
+#define copy_board() \
+    U64 bitboards_copy[12], occupancies_copy[3]; \
+    int side_copy = side, en_passant_copy = en_passant, castle_copy = castle; \
+    memcpy(bitboards_copy, bitboards, 96); \
+    memcpy(occupancies_copy, occupancies, 24); \
+
+#define restore_board() \
+    memcpy(bitboards, bitboards_copy, 96); \
+    memcpy(occupancies, occupancies_copy, 24); \
+    side = side_copy, en_passant = en_passant_copy, castle = castle_copy; \
+
 static inline void generate_moves(moves *move_list) {
     int source_square, target_square;
     // current piece's bitboard and attacks
@@ -1116,12 +1130,16 @@ static inline void generate_moves(moves *move_list) {
 
 int main(void) {
     init_attack_tables();
-    parse_fen("r3k2r/pPppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPpP/R3K2R b KQkq e3 0 1 ");
+    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq c6 0 1 ");
     print_board();
-    moves move_list[1];
-    move_list->count = 0;
-    generate_moves(move_list);
-    print_move_list(move_list);
 
+    copy_board();
+    
+    parse_fen(empty_board);
+    print_board();
+
+    restore_board();
+
+    print_board();
     return 0;
 }
