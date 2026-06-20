@@ -881,6 +881,34 @@ void print_move_list(moves *move_list) {
     memcpy(occupancies, occupancies_copy, 24); \
     side = side_copy, en_passant = en_passant_copy, castle = castle_copy; \
 
+// mvoe types
+enum { all_moves, only_captures };
+
+static inline int make_move(int move, int move_flag) {
+    if (move_flag == all_moves) {
+        copy_board();
+
+        int source_square = get_move_source(move);
+        int target_square = get_move_target(move);
+        int piece = get_move_piece(move);
+        int promoted = get_move_promoted(move);
+        int capture = get_move_capture(move);
+        int double_push = get_move_double_push(move);
+        int en_passant = get_move_en_passant(move);
+        int castling = get_move_castling(move);
+
+        clear_bit(&bitboards[piece], source_square);
+        set_bit(&bitboards[piece], target_square);
+    }
+    // capture moves
+    else {
+        if (get_move_capture(move))
+            make_move(move, all_moves);
+        else
+            return 0;
+    }
+}
+
 static inline void generate_moves(moves *move_list) {
     int source_square, target_square;
     // current piece's bitboard and attacks
@@ -1130,16 +1158,22 @@ static inline void generate_moves(moves *move_list) {
 
 int main(void) {
     init_attack_tables();
-    parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq c6 0 1 ");
+    parse_fen(tricky_position);
     print_board();
 
-    copy_board();
-    
-    parse_fen(empty_board);
-    print_board();
+    moves move_list[2];
 
-    restore_board();
+    generate_moves(move_list);
+    for (int move_count = 0; move_count < move_list->count; move_count++) {
+        int move = move_list->moves[move_count];
+        copy_board();
 
-    print_board();
+        make_move(move, all_moves);
+        print_board();
+        print_move(move);
+        getchar();
+        
+        restore_board();
+    }
     return 0;
 }
