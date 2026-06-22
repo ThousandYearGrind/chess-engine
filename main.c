@@ -4,6 +4,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#ifdef _WIN64
+    #include <windows.h>
+#else
+    #include <sys/time.h>
+#endif
+
 #define U64 unsigned long long
 
 // FEN dedug positions
@@ -79,6 +86,11 @@ char promoted_pieces[] = {
 // bitboards
 U64 bitboards[12];
 U64 occupancies[3];
+static inline void occ() {
+    occupancies[white] = bitboards[wp] | bitboards[wb] | bitboards[wr] | bitboards[wn] | bitboards[wq] | bitboards[wk];
+    occupancies[black] = bitboards[bp] | bitboards[bb] | bitboards[br] | bitboards[bn] | bitboards[bq] | bitboards[bk];
+    occupancies[both] = occupancies[black] | occupancies[white];
+}
 
 // side to move
 int side = -1;
@@ -253,6 +265,8 @@ void parse_fen(char *fen) {
                 break;
             case 'q':
                 castle |= bqc;
+                break;
+            default:
                 break;
         }
         fen++;
@@ -696,12 +710,12 @@ void init_sliders_attacks(int bishop) {
         for (int index = 0; index < occupancy_indices; index++) {
             if (bishop) {
                 U64 occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
-                int magic_index = (occupancy * bishop_magic_numbers[square]) >> (64 - relevant_bits_count);
+                int magic_index = (int) ((occupancy * bishop_magic_numbers[square]) >> (64 - relevant_bits_count));
                 bishop_attacks_table[square][magic_index] = generate_bishop_attacks(square, occupancy);
             }
             else {
                 U64 occupancy = set_occupancy(index, relevant_bits_count, attack_mask);
-                int magic_index = (occupancy * rook_magic_numbers[square]) >> (64 - relevant_bits_count);
+                int magic_index = (int) ((occupancy * rook_magic_numbers[square]) >> (64 - relevant_bits_count));
                 rook_attacks_table[square][magic_index] = generate_rook_attacks(square, occupancy);
             }
         }
@@ -839,9 +853,17 @@ static inline void add_move(moves *move_list, int move) {
 }
 
 void print_move(int move) {
-    printf("%s%s%c", square_coordinates[get_move_source(move)],
-        square_coordinates[get_move_target(move)],
-        get_move_promoted(move) == 0 ? ' ' : promoted_pieces[get_move_promoted(move)]);
+    if (get_move_promoted(move)) {
+        printf("%s%s%c",
+               square_coordinates[get_move_source(move)],
+               square_coordinates[get_move_target(move)],
+               promoted_pieces[get_move_promoted(move)]);
+    }
+    else {
+        printf("%s%s",
+               square_coordinates[get_move_source(move)],
+               square_coordinates[get_move_target(move)]);
+    }
 }
 
 void print_move_list(moves *move_list) {
@@ -965,13 +987,13 @@ static inline int make_move(int move, int move_flag) {
                 clear_bit(&bitboards[br], a8);
                 set_bit(&bitboards[br], d8);
                 break;
+            default:
+                break;
             }
         }
         castle &= castling_rights[this_source_square];
         castle &= castling_rights[this_target_square];
-        occupancies[white] = bitboards[wp] | bitboards[wb] | bitboards[wr] | bitboards[wn] | bitboards[wq] | bitboards[wk];
-        occupancies[black] = bitboards[bp] | bitboards[bb] | bitboards[br] | bitboards[bn] | bitboards[bq] | bitboards[bk];
-        occupancies[both] = occupancies[white] | occupancies[black];
+        occ();
 
         side ^= 1;
 
@@ -983,10 +1005,12 @@ static inline int make_move(int move, int move_flag) {
     }
     // capture moves
     else {
-        if (get_move_capture(move))
-            make_move(move, all_moves);
-        else
+        if (get_move_capture(move)) {
+            return make_move(move, all_moves);
+        }
+        else {
             return 0;
+        }
     }
 }
 
@@ -1237,38 +1261,192 @@ static inline void generate_moves(moves *move_list) {
     }
 }
 
-static inline U64 occ(int side) {
-    U64 ans = 0;
-    if (side == white) {
-        for (int i = wp; i <= wk; i++) {
-            ans |= bitboards[i];
-        }
-    } else {
-        for (int i = bp; i <= bk; i++) {
-            ans |= bitboards[i];
-        }
-    }
-    return ans;
+int get_time_ms() {
+#ifdef WIN64
+    return GetTickCount();
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int) tv.tv_sec * 1000 + tv.tv_usec / 1000;
+#endif
 }
 
-int main(void) {
-    init_attack_tables();
-    parse_fen("r3k2r/p11pqpb1/bn2pnp1/2pPN3/Pp2P3/2N2Q1p/1PPBBPPP/R3K2R w KQkq a3 0 1 ");
-    print_board();
-
+// leaf nodes (number of position reached during move gen test)
+// caller should set nodes = 0 before running this function
+U64 nodes = 0;
+static inline void perft_driver(int depth) {
     moves move_list[1];
-
+    move_list->count = 0;
+    if (depth == 0) {
+        nodes++;
+        return;
+    }
     generate_moves(move_list);
+
     for (int move_count = 0; move_count < move_list->count; move_count++) {
         int move = move_list->moves[move_count];
         copy_board();
-
-        if (!make_move(move, all_moves)) continue;
-        print_board();
-        print_move(move);
-        getchar();
-        
+        if (!make_move(move, all_moves))
+            continue;
+        perft_driver(depth - 1);
         restore_board();
     }
+}
+
+void perft_test(int depth) {
+    int start = get_time_ms();
+    printf("\n    Performance test\n\n");
+
+    moves move_list[1];
+    move_list->count = 0;
+
+    if (depth == 0) {
+        nodes++;
+        return;
+    }
+    generate_moves(move_list);
+
+    for (int move_count = 0; move_count < move_list->count; move_count++) {
+        copy_board();
+        if (!make_move(move_list->moves[move_count], all_moves))
+            continue;
+
+        U64 cumulative_nodes = nodes;
+        perft_driver(depth - 1);
+        U64 old_nodes = nodes - cumulative_nodes;
+
+        restore_board();
+        printf("    move: %s%s%c  nodes: %llu\n",
+               square_coordinates[get_move_source(move_list->moves[move_count])],
+               square_coordinates[get_move_target(move_list->moves[move_count])],
+               get_move_promoted(move_list->moves[move_count]) == 0 ? ' ' : promoted_pieces[get_move_promoted(move_list->moves[move_count])],
+               old_nodes);
+
+    }
+
+    printf("\n    Depth: %d\n", depth);
+    printf("    Nodes: %llu\n", nodes);
+    printf("     Time: %d\n", get_time_ms() - start);
+}
+
+// search
+
+void search_position(int depth) {
+    printf("bestmove d2d4\n");
+}
+
+// universal chess interface
+
+int parse_move(char * move_string) {
+    moves move_list[1];
+    move_list->count = 0;
+    generate_moves(move_list);
+
+    int source_square = sq((8 - (move_string[1] - '0')), move_string[0] - 'a');
+    int target_square = sq((8 - (move_string[3] - '0')), move_string[2] - 'a');
+
+    for (int i = 0; i < move_list->count; i++) {
+        int move = move_list->moves[i];
+        int this_promoted_piece = 0;
+        if (strlen(move_string) == 5) {
+            this_promoted_piece = char_pieces[move_string[4]];
+        }
+        if (get_move_source(move) == source_square && get_move_target(move) == target_square && get_move_promoted(move) == this_promoted_piece) {
+            return move;
+        }
+    }
+
+    return 0;
+}
+
+void parse_position(char* command) {
+    command += 9;
+    char *cur_char = command;
+    if (strncmp(command, "startpos", 8) == 0)
+        parse_fen(start_position);
+    else {
+        cur_char = strstr(command, "fen");
+        if (cur_char == NULL)
+            parse_fen(start_position);
+        else {
+            cur_char += 4;
+            parse_fen(cur_char);
+        }
+    }
+
+    cur_char = strstr(command, "moves");
+    if (cur_char == NULL);
+    else {
+        cur_char += 6;
+        while (*cur_char != '\0') {
+            make_move(parse_move(cur_char), all_moves);
+            while (*cur_char != ' ' && *cur_char != '\0') cur_char++;
+            if (*cur_char != '\0') cur_char++;
+        }
+    }
+
+    print_board();
+}
+
+void parse_go(char* command) {
+    int depth = -1;
+    char* current_depth = NULL;
+    if ((current_depth = strstr(command, "depth")) != NULL) {
+        depth = atoi(current_depth + 6);
+    }
+    else {
+        depth = 6;
+    }
+
+    printf("depth: %d\n", depth);
+    search_position(depth);
+}
+
+void uci_loop() {
+    setbuf(stdin, NULL);
+    setbuf(stdout, NULL);
+    char input[2000];
+
+    printf("id name bitboardchessengine\n");
+    printf("id name TYG\n");
+    printf("uciok\n");
+
+    while (1) {
+        memset(input, 0, sizeof(input));
+        fflush(stdout);
+        if (!fgets(input, 2000, stdin))
+            continue;
+        if (input[0] == '\n')
+            continue;
+
+        if (strncmp(input, "isready", 7) == 0) {
+            printf("readyok\n");
+            continue;
+        }
+
+        if (strncmp(input, "position", 8) == 0)
+            parse_position(input);
+
+        else if (strncmp(input, "ucinewgame", 10) == 0)
+            parse_position("position startpos");
+
+        else if (strncmp(input, "go", 2) == 0)
+            parse_go(input);
+
+        else if (strncmp(input, "quit", 4) == 0)
+            break;
+
+        else if (strncmp(input, "uci", 3) == 0) {
+            printf("id name bitboardchessengine\n");
+            printf("id name TYG\n");
+            printf("uciok\n");
+        }
+    }
+}
+    
+int main(void) {
+    init_attack_tables();
+    // connect to gui
+    uci_loop();
     return 0;
 }
