@@ -1641,6 +1641,12 @@ void uci_loop() {
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     init_attack_tables();
+    /*
+     * next goasl:
+     * understand alpha beta pruning
+     * go back to understand magic bitboards
+     * implement checkmate and stalemate detection
+     */
     // connect to gui
     // if (0) {
     //     parse_position("position startpos");
