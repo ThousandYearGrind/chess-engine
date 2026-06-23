@@ -52,44 +52,26 @@ enum {wkc = 1, wqc = 2, bkc = 4, bqc = 8};
 // piece types for each color
 enum { wp, wn, wb, wr, wq, wk, bp, bn, bb, br, bq, bk };
 
-char ascii_pieces[12] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k'};
+char ascii_pieces[12] = {'P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b',
+    'r', 'q', 'k' };
 
-int char_pieces[] = {
-    ['P'] = wp,
-    ['N'] = wn,
-    ['B'] = wb,
-    ['R'] = wr,
-    ['Q'] = wq,
-    ['K'] = wk,
-    ['p'] = bp,
-    ['n'] = bn,
-    ['b'] = bb,
-    ['r'] = br,
-    ['q'] = bq,
-    ['k'] = bk
-};
-char promoted_pieces[] = {
-    [wq] = 'Q',
-    [wr] = 'R',
-    [wb] = 'B',
-    [wn] = 'N',
-    [wp] = 'P',
-    [wk] = 'K',
-    [bq] = 'q',
-    [br] = 'r',
-    [bb] = 'b',
-    [bn] = 'n',
-    [bp] = 'p',
-    [bk] = 'k'
-};
+int char_pieces[] = { ['P'] = wp, ['N'] = wn, ['B'] = wb, ['R'] = wr,
+    ['Q'] = wq, ['K'] = wk, ['p'] = bp, ['n'] = bn, ['b'] = bb, ['r']
+    = br, ['q'] = bq, ['k'] = bk };
+
+char promoted_pieces[] = { [wq] = 'Q', [wr] = 'R', [wb] = 'B', [wn] =
+    'N', [wp] = 'P', [wk] = 'K', [bq] = 'q', [br] = 'r', [bb] = 'b',
+    [bn] = 'n', [bp] = 'p', [bk] = 'k' };
 
 // bitboards
 U64 bitboards[12];
 U64 occupancies[3];
 static inline void occ() {
-    occupancies[white] = bitboards[wp] | bitboards[wb] | bitboards[wr] | bitboards[wn] | bitboards[wq] | bitboards[wk];
-    occupancies[black] = bitboards[bp] | bitboards[bb] | bitboards[br] | bitboards[bn] | bitboards[bq] | bitboards[bk];
-    occupancies[both] = occupancies[black] | occupancies[white];
+    occupancies[white] = bitboards[wp] | bitboards[wb] | bitboards[wr]
+    | bitboards[wn] | bitboards[wq] | bitboards[wk];
+    occupancies[black] = bitboards[bp] | bitboards[bb] | bitboards[br]
+    | bitboards[bn] | bitboards[bq] | bitboards[bk]; occupancies[both]
+    = occupancies[black] | occupancies[white];
 }
 
 // side to move
@@ -212,7 +194,8 @@ void print_board() {
         printf("\n");
     }
     printf("\n     a b c d e f g h\n\n");
-    printf("     Side:     %s\n", (side == white) ? "white" : side == black ? "black" : "0");
+    printf(" Side: %s\n", (side == white) ? "white" : side == black ?
+    "black" : "0");
     printf("     En passant:  %s\n", (en_passant == no_square) ? "no" : square_coordinates[en_passant]);
     printf("     Castling:  %c%c%c%c\n\n",
         (castle & wkc) ? 'K' : '-',
@@ -232,7 +215,8 @@ void parse_fen(char *fen) {
     for (int rank = 0; rank < 8; rank++) {
         for (int file = 0; file < 8;) {
             int square = sq(rank, file);
-            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen <= 'Z')) {
+            if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen
+            <= 'Z')) {
                 int piece = char_pieces[*fen];
                 set_bit(&bitboards[piece], square);
                 file++;
@@ -544,10 +528,14 @@ U64 mask_bishop_attacks(int square) {
     int curFile = square % 8;
 
     int r, f;
-    for (r = curRank + 1, f = curFile + 1; r <= 6 && f <= 6; ++r, ++f) set_bit(&attacks, sq(r, f));
-    for (r = curRank + 1, f = curFile - 1; r <= 6 && f >= 1; ++r, --f) set_bit(&attacks, sq(r, f));
-    for (r = curRank - 1, f = curFile + 1; r >= 1 && f <= 6; --r, ++f) set_bit(&attacks, sq(r, f));
-    for (r = curRank - 1, f = curFile - 1; r >= 1 && f >= 1; --r, --f) set_bit(&attacks, sq(r, f));
+    for (r = curRank + 1, f = curFile + 1; r <= 6 && f <= 6; ++r, ++f)
+        set_bit(&attacks, sq(r, f));
+    for (r = curRank + 1, f = curFile - 1; r <= 6 && f >= 1; ++r, --f)
+        set_bit(&attacks, sq(r, f));
+    for (r = curRank - 1, f = curFile + 1; r >= 1 && f <= 6; --r, ++f)
+        set_bit(&attacks, sq(r, f));
+    for (r = curRank - 1, f = curFile - 1; r >= 1 && f >= 1; --r, --f)
+        set_bit(&attacks, sq(r, f));
 
     return attacks;
 }
@@ -594,10 +582,14 @@ U64 mask_rook_attacks(int square) {
     int file = square % 8;
 
     int r, f;
-    for (r = rank + 1, f = file; r <= 6; ++r) set_bit(&attacks, sq(r, f));
-    for (r = rank - 1, f = file; r >= 1; --r) set_bit(&attacks, sq(r, f));
-    for (r = rank, f = file + 1; f <= 6; ++f) set_bit(&attacks, sq(r, f));
-    for (r = rank, f = file - 1; f >= 1; --f) set_bit(&attacks, sq(r, f));
+    for (r = rank + 1, f = file; r <= 6; ++r)
+        set_bit(&attacks, sq(r, f));
+    for (r = rank - 1, f = file; r >= 1; --r)
+        set_bit(&attacks, sq(r, f));
+    for (r = rank, f = file + 1; f <= 6; ++f)
+        set_bit(&attacks, sq(r, f));
+    for (r = rank, f = file - 1; f >= 1; --f)
+        set_bit(&attacks, sq(r, f));
 
     return attacks;
 }
@@ -655,26 +647,35 @@ U64 find_magic_number(int square, int relevant_bits, int bishop) {
     U64 occupancies[4096];
     U64 attacks[4096];
     U64 used_attacks[4096];
-    U64 attack_mask = bishop ? mask_bishop_attacks(square) : mask_rook_attacks(square);
+    U64 attack_mask = bishop ? mask_bishop_attacks(square) :
+        mask_rook_attacks(square);
     int occupancy_indices = 1 << relevant_bits;
 
     for (int index = 0; index < occupancy_indices; ++index) {
-        occupancies[index] = set_occupancy(index, relevant_bits, attack_mask);
-        attacks[index] = bishop ? generate_bishop_attacks(square, occupancies[index]) : generate_rook_attacks(square, occupancies[index]);
+        occupancies[index] = set_occupancy(index, relevant_bits,
+            attack_mask);
+        attacks[index] = bishop ?
+            generate_bishop_attacks(square, occupancies[index]) :
+            generate_rook_attacks(square, occupancies[index]);
     }
 
     // test magic numbers
-    for (int random_count = 0; random_count < 100000000; random_count++) {
+    for (int random_count = 0; random_count < 100000000;
+         random_count++) {
         U64 magic_number = generate_magic_number();
 
         // skip bad magic numbers
-        if (count_bits((attack_mask * magic_number) & 0xFF00000000000000) < 6) continue;
+        if (count_bits((attack_mask * magic_number) &
+                       0xFF00000000000000) < 6)
+            continue;
 
         memset(used_attacks, 0ULL, sizeof(used_attacks));
         int index, fail;
 
-        for (index = 0, fail = 0; !fail && index < occupancy_indices; index++) {
-            int magic_index = (int) ((occupancies[index] * magic_number) >> (64 - relevant_bits));
+        for (index = 0, fail = 0; !fail && index < occupancy_indices;
+             index++) {
+            int magic_index = (int) ((occupancies[index] *
+                                      magic_number) >> (64 - relevant_bits));
             if (used_attacks[magic_index] == 0ULL)
                 used_attacks[magic_index] = attacks[index];
             else if (used_attacks[magic_index] != attacks[index])
@@ -1329,10 +1330,203 @@ void perft_test(int depth) {
     printf("     Time: %d\n", get_time_ms() - start);
 }
 
+int material_score[12] = {
+    [wp] = 100,
+    [wn] = 300,
+    [wb] = 350,
+    [wr] = 500,
+    [wq] = 1000,
+    [wk] = 10000,
+    [bp] = -100,
+    [bn] = -300,
+    [bb] = -350,
+    [br] = -500,
+    [bq] = -1000,
+    [bk] = -10000,
+};
+
+const int pawn_score[64] = 
+{
+    90,  90,  90,  90,  90,  90,  90,  90,
+    30,  30,  30,  40,  40,  30,  30,  30,
+    20,  20,  20,  30,  30,  30,  20,  20,
+    10,  10,  10,  20,  20,  10,  10,  10,
+     5,   5,  10,  20,  20,   5,   5,   5,
+     0,   0,   0,   5,   5,   0,   0,   0,
+     0,   0,   0, -10, -10,   0,   0,   0,
+     0,   0,   0,   0,   0,   0,   0,   0
+};
+
+const int knight_score[64] = 
+{
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5,   0,   0,  10,  10,   0,   0,  -5,
+    -5,   5,  20,  20,  20,  20,   5,  -5,
+    -5,  10,  20,  30,  30,  20,  10,  -5,
+    -5,  10,  20,  30,  30,  20,  10,  -5,
+    -5,   5,  20,  10,  10,  20,   5,  -5,
+    -5,   0,   0,   0,   0,   0,   0,  -5,
+    -5, -10,   0,   0,   0,   0, -10,  -5
+};
+
+const int bishop_score[64] = 
+{
+     0,   0,   0,   0,   0,   0,   0,   0,
+     0,   0,   0,   0,   0,   0,   0,   0,
+     0,   0,   0,  10,  10,   0,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,  10,   0,   0,   0,   0,  10,   0,
+     0,  30,   0,   0,   0,   0,  30,   0,
+     0,   0, -10,   0,   0, -10,   0,   0
+
+};
+
+const int rook_score[64] =
+{
+    50,  50,  50,  50,  50,  50,  50,  50,
+    50,  50,  50,  50,  50,  50,  50,  50,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,  10,  20,  20,  10,   0,   0,
+     0,   0,   0,  20,  20,   0,   0,   0
+
+};
+
+const int king_score[64] = 
+{
+     0,   0,   0,   0,   0,   0,   0,   0,
+     0,   0,   5,   5,   5,   5,   0,   0,
+     0,   5,   5,  10,  10,   5,   5,   0,
+     0,   5,  10,  20,  20,  10,   5,   0,
+     0,   5,  10,  20,  20,  10,   5,   0,
+     0,   0,   5,  10,  10,   5,   0,   0,
+     0,   5,   5,  -5,  -5,   0,   5,   0,
+     0,   0,   5,   0, -15,   0,  10,   0
+};
+
+const int mirror_score[128] =
+{
+	a1, b1, c1, d1, e1, f1, g1, h1,
+	a2, b2, c2, d2, e2, f2, g2, h2,
+	a3, b3, c3, d3, e3, f3, g3, h3,
+	a4, b4, c4, d4, e4, f4, g4, h4,
+	a5, b5, c5, d5, e5, f5, g5, h5,
+	a6, b6, c6, d6, e6, f6, g6, h6,
+	a7, b7, c7, d7, e7, f7, g7, h7,
+	a8, b8, c8, d8, e8, f8, g8, h8
+};
+
+static inline int evaluate() {
+    int score = 0;
+    U64 bitboard;
+    int piece, square;
+    for (int i_piece= wp; i_piece <= bk; i_piece++) {
+        bitboard = bitboards[i_piece];
+        while (bitboard) {
+            piece = i_piece;
+            square = get_lsb_index(bitboard);
+            score += material_score[piece];
+            switch (piece)
+                {
+                case wp:
+                    score += pawn_score[square];
+                    break;
+                case wn:
+                    score += knight_score[square];
+                    break;
+                case wb:
+                    score += bishop_score[square];
+                    break;
+                case wr:
+                    score += rook_score[square];
+                    break;
+                /* case wq: */
+                /*     score += queen_score[square]; */
+                /*     break; */
+                case wk:
+                    score += king_score[square];
+                    break;
+                case bp:
+                    score -= pawn_score[mirror_score[square]];
+                    break;
+                case bn:
+                    score -= knight_score[mirror_score[square]];
+                    break;
+                case bb:
+                    score -= bishop_score[mirror_score[square]];
+                    break;
+                case br:
+                    score -= rook_score[mirror_score[square]];
+                    break;
+                /* case bq: */
+                /*     score -= queen_score[mirror_score[square]]; */
+                /*     break; */
+                case bk:
+                    score -= king_score[mirror_score[square]];
+                    break;
+                }
+            clear_bit(&bitboard, square);
+        }
+    }
+    return side == white ? score : -score;
+}
+
 // search
 
+int ply = 0; // half move counter
+int best_move;
+
+static inline int negamax(int alpha, int beta, int depth) {
+    if (depth == 0)
+        return evaluate();
+
+    nodes++;
+    int best_yet;
+    int old_alpha = alpha;
+
+    moves move_list[1];
+    move_list->count = 0;
+    generate_moves(move_list);
+
+    for (int count = 0; count < move_list->count; count++) {
+        copy_board();
+
+        ply++;
+        if (make_move(move_list->moves[count], all_moves) == 0) {
+            ply--;
+            continue;
+        }
+
+        int score = -negamax(-beta, -alpha, depth - 1);
+        ply--;
+        restore_board();
+
+        if (score >= beta) {
+            return beta;
+        }
+
+        if (score > alpha) {
+            alpha = score;
+            if (ply == 0)
+                best_yet = move_list->moves[count];
+        }
+    }
+
+    if (old_alpha != alpha) {
+        best_move = best_yet;
+    }
+
+    return alpha;
+}
+
 void search_position(int depth) {
-    printf("bestmove d2d4\n");
+    int score = negamax(-50000, 50000, depth);
+    printf("bestmove ");
+    print_move(best_move);
+    printf("\n");
 }
 
 // universal chess interface
@@ -1445,8 +1639,16 @@ void uci_loop() {
 }
     
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     init_attack_tables();
     // connect to gui
-    uci_loop();
-    return 0;
+    // if (0) {
+    //     parse_position("position startpos");
+    //     print_board();
+    //     search_position(2);
+    // }
+    // else {
+        uci_loop();
+    // }
+    return -1;
 }
