@@ -723,6 +723,26 @@ void init_sliders_attacks(int bishop) {
     }
 }
 
+/* my explanation of the so-called "magic" numbers
+ *
+ * at a given square, a sliding piece has only so many squares
+ * the occupancy of which is relevant to its sliding
+ * however these squares are scattered across the 64 bits of
+ * the bitboard even though the number of configurations of
+ * the relevant bits is far smaller than the number of configurations
+ * of 64 bits
+ *
+ * hence, we multiply a number with the relevant occupancy square
+ * bitboard in order to make the information in the bitboard more dense
+ * and look at only the number of relevant occupancy square bits
+ * to form a hashing function that maps every configuration of occupancy
+ * bits to a unique number
+ *
+ * there is no particular meaning to finding such a number,
+ * so we just find it using trial and error, generating random numbers
+ * until we find one that satisfies our needs
+ */
+
 static inline U64 get_bishop_attacks(int square, U64 occupancy) {
     occupancy &= bishop_masks[square];
     occupancy *= bishop_magic_numbers[square];
