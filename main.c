@@ -1504,6 +1504,9 @@ static inline int negamax(int alpha, int beta, int depth) {
         return evaluate();
 
     nodes++;
+    int legal_moves = 0;
+    int in_check = is_sq_attacked( get_lsb_index(bitboards[side == white ? wk : bk]), side ^ 1);
+
     int best_yet;
     int old_alpha = alpha;
 
@@ -1520,6 +1523,8 @@ static inline int negamax(int alpha, int beta, int depth) {
             continue;
         }
 
+        legal_moves++;
+
         int score = -negamax(-beta, -alpha, depth - 1);
         ply--;
         restore_board();
@@ -1535,6 +1540,13 @@ static inline int negamax(int alpha, int beta, int depth) {
         }
     }
 
+    if (legal_moves == 0) {
+        if (in_check)
+            return -49000 + ply;
+        else
+            return 0;
+    }
+
     if (old_alpha != alpha) {
         best_move = best_yet;
     }
@@ -1544,9 +1556,11 @@ static inline int negamax(int alpha, int beta, int depth) {
 
 void search_position(int depth) {
     int score = negamax(-50000, 50000, depth);
-    printf("bestmove ");
-    print_move(best_move);
-    printf("\n");
+    if (best_move) {
+        printf("bestmove ");
+        print_move(best_move);
+        printf("\n");
+    }
 }
 
 // universal chess interface
