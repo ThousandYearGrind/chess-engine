@@ -1026,7 +1026,7 @@ static inline int make_move(int move, int move_flag) {
     }
     // capture moves
     else {
-        if (get_move_capture(move)) {
+        if (get_move_capture(move) || get_move_promoted(move)) {
             return make_move(move, all_moves);
         }
         else {
@@ -1499,9 +1499,44 @@ static inline int evaluate() {
 int ply = 0; // half move counter
 int best_move;
 
+static inline int quiescence(int alpha, int beta) {
+    int evaluation = evaluate();
+    if (evaluation >= beta) {
+        return beta;
+    }
+    if (evaluation > alpha) {
+        alpha = evaluation;
+    }
+
+    moves move_list[1];
+    move_list->count = 0;
+    generate_moves(move_list);
+
+    for (int count = 0; count < move_list->count; count++) {
+        copy_board();
+        ply++;
+        if (make_move(move_list->moves[count], only_captures) == 0) {
+            ply--;
+            continue;
+        }
+        int score = -quiescence(-beta, -alpha);
+        ply--;
+        restore_board();
+
+        if (score >= beta) {
+            return beta;
+        }
+        if (score > alpha) {
+            alpha = score;
+        }
+    }
+
+    return alpha;
+}
+
 static inline int negamax(int alpha, int beta, int depth) {
     if (depth == 0)
-        return evaluate();
+        return quiescence(alpha, beta);
 
     nodes++;
     int legal_moves = 0;
