@@ -120,9 +120,9 @@ U64 generate_magic_number() {
 // bit manipulation section
 
 // operation at bit[square] in the bitboard
-#define set_bit(bitboard, square) ((bitboard) |= (1ULL << square))
-#define get_bit(bitboard, square) ((bitboard) & (1ULL << square))
-#define clear_bit(bitboard, square) ((bitboard) &= ~(1ULL << square))
+#define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
+#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
+#define clear_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square)))
 
 static inline int sq(int rank, int file) {
     return (rank << 3) + file;
@@ -1528,7 +1528,7 @@ static inline int quiescence(int alpha, int beta) {
 
 static inline int negamax(int alpha, int beta, int depth) {
     if (depth == 0)
-        return quiescence(alpha, beta);
+        return evaluate();
 
     nodes++;
     int legal_moves = 0;
@@ -1705,8 +1705,7 @@ int main(void) {
     /*
      * next goasl:
      * understand alpha beta pruning
-     * go back to understand magic bitboards
-     * implement checkmate and stalemate detection
+     * generate captures function
      */
     // connect to gui
     // if (0) {
