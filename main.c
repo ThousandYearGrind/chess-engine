@@ -120,17 +120,9 @@ U64 generate_magic_number() {
 // bit manipulation section
 
 // operation at bit[square] in the bitboard
-static inline U64 set_bit(U64 *bitboard, int square) {
-    return (*bitboard) |= (1ULL << square);
-}
-
-static inline U64 get_bit(U64 bitboard, int square) {
-    return bitboard & (1ULL << square);
-}
-
-static inline U64 clear_bit(U64 *bitboard, int square) {
-    return (*bitboard) &= ~(1ULL << square);
-}
+#define set_bit(bitboard, square) ((bitboard) |= (1ULL << square))
+#define get_bit(bitboard, square) ((bitboard) & (1ULL << square))
+#define clear_bit(bitboard, square) ((bitboard) &= ~(1ULL << square))
 
 static inline int sq(int rank, int file) {
     return (rank << 3) + file;
@@ -218,7 +210,7 @@ void parse_fen(char *fen) {
             if ((*fen >= 'a' && *fen <= 'z') || (*fen >= 'A' && *fen
             <= 'Z')) {
                 int piece = char_pieces[*fen];
-                set_bit(&bitboards[piece], square);
+                set_bit(bitboards[piece], square);
                 file++;
                 fen++;
             }
@@ -460,7 +452,7 @@ U64 mask_pawn_attacks(int square, int color) {
     // piece bitboard
     U64 bitboard = 0ULL;
     // set piece on board
-    set_bit(&bitboard, square);
+    set_bit(bitboard, square);
     // white pawns
     if (color == white) {
         attacks |= (bitboard & not_file_h) >> 7;
@@ -478,7 +470,7 @@ U64 mask_pawn_attacks(int square, int color) {
 U64 mask_knight_attacks(int square) {
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
-    set_bit(&bitboard, square);
+    set_bit(bitboard, square);
     if (bitboard & not_file_h) {
         attacks |= (bitboard << 17); // down 2 right 1
         attacks |= (bitboard >> 15); // up 2 right 1
@@ -502,7 +494,7 @@ U64 mask_knight_attacks(int square) {
 U64 mask_king_attacks(int square) {
     U64 attacks = 0ULL;
     U64 bitboard = 0ULL;
-    set_bit(&bitboard, square);
+    set_bit(bitboard, square);
     if (bitboard & not_file_h) {
         attacks |= bitboard << 9;
         attacks |= bitboard << 1;
@@ -529,13 +521,13 @@ U64 mask_bishop_attacks(int square) {
 
     int r, f;
     for (r = curRank + 1, f = curFile + 1; r <= 6 && f <= 6; ++r, ++f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = curRank + 1, f = curFile - 1; r <= 6 && f >= 1; ++r, --f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = curRank - 1, f = curFile + 1; r >= 1 && f <= 6; --r, ++f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = curRank - 1, f = curFile - 1; r >= 1 && f >= 1; --r, --f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
 
     return attacks;
 }
@@ -552,19 +544,19 @@ U64 generate_bishop_attacks(int square, U64 board) {
 
     int r, f;
     for (r = curRank + 1, f = curFile + 1; r <= 7 && f <= 7; ++r, ++f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = curRank + 1, f = curFile - 1; r <= 7 && f >= 0; ++r, --f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = curRank - 1, f = curFile + 1; r >= 0 && f <= 7; --r, ++f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = curRank - 1, f = curFile - 1; r >= 0 && f >= 0; --r, --f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
 
@@ -583,13 +575,13 @@ U64 mask_rook_attacks(int square) {
 
     int r, f;
     for (r = rank + 1, f = file; r <= 6; ++r)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = rank - 1, f = file; r >= 1; --r)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = rank, f = file + 1; f <= 6; ++f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
     for (r = rank, f = file - 1; f >= 1; --f)
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
 
     return attacks;
 }
@@ -606,19 +598,19 @@ U64 generate_rook_attacks(int square, U64 board) {
 
     int r, f;
     for (r = rank + 1, f = file; r <= 7; ++r) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = rank - 1, f = file; r >= 0; --r) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = rank, f = file + 1; f <= 7; ++f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
     for (r = rank, f = file - 1; f >= 0; --f) {
-        set_bit(&attacks, sq(r, f));
+        set_bit(attacks, sq(r, f));
         if (get_bit(board, sq(r, f))) break;
     }
 
@@ -637,8 +629,8 @@ U64 set_occupancy(int index, int bits_in_mask, U64 attack_mask) {
     for (int count = 0; count < bits_in_mask; ++count) {
         // get lsb index of attack mask
         int square = get_lsb_index(attack_mask);
-        clear_bit(&attack_mask, square);
-        if (index & (1 << count)) set_bit(&occupancy, square);
+        clear_bit(attack_mask, square);
+        if (index & (1 << count)) set_bit(occupancy, square);
     }
     return occupancy;
 }
@@ -951,8 +943,8 @@ static inline int make_move(int move, int move_flag) {
         int this_en_passant = get_move_en_passant(move);
         int this_castling = get_move_castling(move);
 
-        clear_bit(&bitboards[this_piece], this_source_square);
-        set_bit(&bitboards[this_piece], this_target_square);
+        clear_bit(bitboards[this_piece], this_source_square);
+        set_bit(bitboards[this_piece], this_target_square);
 
         if (this_capture) {
             int start_piece, end_piece;
@@ -967,20 +959,20 @@ static inline int make_move(int move, int move_flag) {
 
             for (int i_piece = start_piece; i_piece < end_piece; i_piece++) {
                 if (get_bit(bitboards[i_piece], this_target_square)) {
-                    clear_bit(&bitboards[i_piece], this_target_square);
+                    clear_bit(bitboards[i_piece], this_target_square);
                     break;
                 }
             }
         }
 
         if (this_promoted_piece) {
-            clear_bit(&bitboards[(side == white) ? wp : bp], this_target_square);
-            set_bit(&bitboards[this_promoted_piece], this_target_square);
+            clear_bit(bitboards[(side == white) ? wp : bp], this_target_square);
+            set_bit(bitboards[this_promoted_piece], this_target_square);
         }
 
         if (this_en_passant) {
-            if (side == white) clear_bit(&bitboards[bp], this_target_square + 8) ;
-            else clear_bit(&bitboards[wp], this_target_square - 8);
+            if (side == white) clear_bit(bitboards[bp], this_target_square + 8) ;
+            else clear_bit(bitboards[wp], this_target_square - 8);
         }
 
         en_passant = no_square;
@@ -993,20 +985,20 @@ static inline int make_move(int move, int move_flag) {
         if (this_castling) {
             switch (this_target_square) {
             case g1:
-                clear_bit(&bitboards[wr], h1);
-                set_bit(&bitboards[wr], f1);
+                clear_bit(bitboards[wr], h1);
+                set_bit(bitboards[wr], f1);
                 break;
             case c1:
-                clear_bit(&bitboards[wr], a1);
-                set_bit(&bitboards[wr], d1);
+                clear_bit(bitboards[wr], a1);
+                set_bit(bitboards[wr], d1);
                 break;
             case g8:
-                clear_bit(&bitboards[br], h8);
-                set_bit(&bitboards[br], f8);
+                clear_bit(bitboards[br], h8);
+                set_bit(bitboards[br], f8);
                 break;
             case c8:
-                clear_bit(&bitboards[br], a8);
-                set_bit(&bitboards[br], d8);
+                clear_bit(bitboards[br], a8);
+                set_bit(bitboards[br], d8);
                 break;
             default:
                 break;
@@ -1084,7 +1076,7 @@ static inline void generate_moves(moves *move_list) {
                             add_move(move_list,
                                 encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
-                        clear_bit(&attacks, target_square);
+                        clear_bit(attacks, target_square);
                     }
                     if (en_passant != no_square) {
                         U64 en_passant_attacks = pawn_attacks_table[side][source_square] & (1ULL << en_passant);
@@ -1094,7 +1086,7 @@ static inline void generate_moves(moves *move_list) {
                                 encode_move(source_square, target_square, piece, 0, 1, 0, 1, 0));
                         }
                     }
-                    clear_bit(&bitboard, source_square);
+                    clear_bit(bitboard, source_square);
                 }
             }
             if (piece == wk) {
@@ -1160,7 +1152,7 @@ static inline void generate_moves(moves *move_list) {
                             add_move(move_list,
                                 encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
                         }
-                        clear_bit(&attacks, target_square);
+                        clear_bit(attacks, target_square);
                     }
                     if (en_passant != no_square) {
                         U64 en_passant_attacks = pawn_attacks_table[side][source_square] & (1ULL << en_passant);
@@ -1170,7 +1162,7 @@ static inline void generate_moves(moves *move_list) {
                                 encode_move(source_square, target_square, piece, 0, 1, 0, 1, 0));
                         }
                     }
-                    clear_bit(&bitboard, source_square);
+                    clear_bit(bitboard, source_square);
                 }
             }
             if (piece == bk) {
@@ -1206,9 +1198,9 @@ static inline void generate_moves(moves *move_list) {
                     else
                         add_move(move_list,
                             encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    clear_bit(&attacks, target_square);
+                    clear_bit(attacks, target_square);
                 }
-                clear_bit(&bitboard, source_square);
+                clear_bit(bitboard, source_square);
             }
         }
         if (side == white ? piece == wb : piece == bb) {
@@ -1223,9 +1215,9 @@ static inline void generate_moves(moves *move_list) {
                     else
                         add_move(move_list,
                             encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    clear_bit(&attacks, target_square);
+                    clear_bit(attacks, target_square);
                 }
-                clear_bit(&bitboard, source_square);
+                clear_bit(bitboard, source_square);
             }
         }
         if (side == white ? piece == wr : piece == br) {
@@ -1240,9 +1232,9 @@ static inline void generate_moves(moves *move_list) {
                     else
                         add_move(move_list,
                             encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    clear_bit(&attacks, target_square);
+                    clear_bit(attacks, target_square);
                 }
-                clear_bit(&bitboard, source_square);
+                clear_bit(bitboard, source_square);
             }
         }
         if (side == white ? piece == wq : piece == bq) {
@@ -1257,9 +1249,9 @@ static inline void generate_moves(moves *move_list) {
                     else
                         add_move(move_list,
                             encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    clear_bit(&attacks, target_square);
+                    clear_bit(attacks, target_square);
                 }
-                clear_bit(&bitboard, source_square);
+                clear_bit(bitboard, source_square);
             }
         }
         if (side == white ? piece == wk : piece == bk) {
@@ -1274,9 +1266,9 @@ static inline void generate_moves(moves *move_list) {
                     else
                         add_move(move_list,
                             encode_move(source_square, target_square, piece, 0, 1, 0, 0, 0));
-                    clear_bit(&attacks, target_square);
+                    clear_bit(attacks, target_square);
                 }
-                clear_bit(&bitboard, source_square);
+                clear_bit(bitboard, source_square);
             }
         }
     }
@@ -1488,7 +1480,7 @@ static inline int evaluate() {
                     score -= king_score[mirror_score[square]];
                     break;
                 }
-            clear_bit(&bitboard, square);
+            clear_bit(bitboard, square);
         }
     }
     return side == white ? score : -score;
