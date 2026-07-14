@@ -885,6 +885,7 @@ void print_move_list(moves *move_list) {
         return;
     }
 
+
     printf("\n    move   piece  capture  double  enpassant  castling\n");
     for (int move_count = 0; move_count < move_list->count; move_count++) {
         int move = move_list->moves[move_count];
@@ -957,7 +958,7 @@ static inline int make_move(int move, int move_flag) {
                 end_piece = wk;
             }
 
-            for (int i_piece = start_piece; i_piece < end_piece; i_piece++) {
+            for (int i_piece = start_piece; i_piece <= end_piece; i_piece++) {
                 if (get_bit(bitboards[i_piece], this_target_square)) {
                     clear_bit(bitboards[i_piece], this_target_square);
                     break;
@@ -1523,6 +1524,39 @@ static int mvv_lva[12][12] = {
 int ply = 0; // half move counter
 int best_move;
 
+static inline int score_move(int move) {
+    if (get_move_capture(move)) {
+        int attack_piece = get_move_piece(move);
+        int target_square = get_move_target(move);
+        int target_piece;
+
+        int start_piece, end_piece;
+        if (side == white) { start_piece = bp; end_piece = bk; }
+        else { start_piece = wp; end_piece = wk; }
+
+        for (int i_piece = start_piece; i_piece <= end_piece; i_piece++) {
+            if (get_bit(bitboards[i_piece], target_square)) {
+                target_piece = i_piece;
+                break;
+            }
+        }
+
+        return mvv_lva[attack_piece][target_piece];
+    }
+    else {
+        return 0;
+    }
+}
+
+void print_move_scores(moves *move_list) {
+    printf("     Move scores:\n\n");
+    for (int i = 0; i < move_list->count; i++) {
+        printf("     move: ");
+        print_move(move_list->moves[i]);
+        printf(" score %d\n", score_move(move_list->moves[i]));
+    }
+}
+
 static inline int quiescence(int alpha, int beta) {
     nodes++;
     int evaluation = evaluate();
@@ -1740,13 +1774,16 @@ int main(void) {
      * generate captures function
      */
     // connect to gui
-    // if (0) {
-    //     parse_position("position startpos");
-    //     print_board();
-    //     search_position(2);
-    // }
-    // else {
+    if (1) {
+        parse_fen(tricky_position);
+        moves move_list[1];
+        move_list->count = 0;
+        generate_moves(move_list);
+        print_move_scores(move_list);
+    }
+    else {
         uci_loop();
-    // }
+    }
+
     return -1;
 }
