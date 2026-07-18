@@ -1548,6 +1548,29 @@ static inline int score_move(int move) {
     }
 }
 
+static inline void sort_moves(moves *move_list) {
+    int move_scores[move_list->count];
+    for (int count = 0; count < move_list->count; count++)
+        move_scores[count] = score_move(move_list->moves[count]);
+
+    for (int i = 0; i < move_list->count; i++) {
+        int idx = i;
+        for (int j = i + 1; j < move_list->count; j++) {
+            if (move_scores[j] > move_scores[idx]) {
+                idx = j;
+            }
+        }
+
+        int temp = move_scores[idx];
+        move_scores[idx] = move_scores[i];
+        move_scores[i] = temp;
+
+        temp = move_list->moves[idx];
+        move_list->moves[idx] = move_list->moves[i];
+        move_list->moves[i] = temp;
+    }
+}
+
 void print_move_scores(moves *move_list) {
     printf("     Move scores:\n\n");
     for (int i = 0; i < move_list->count; i++) {
@@ -1570,6 +1593,7 @@ static inline int quiescence(int alpha, int beta) {
     moves move_list[1];
     move_list->count = 0;
     generate_moves(move_list);
+    sort_moves(move_list);
 
     for (int count = 0; count < move_list->count; count++) {
         copy_board();
@@ -1600,6 +1624,7 @@ static inline int negamax(int alpha, int beta, int depth) {
     nodes++;
     int legal_moves = 0;
     int in_check = is_sq_attacked( get_lsb_index(bitboards[side == white ? wk : bk]), side ^ 1);
+    if (in_check) depth++;
 
     int best_yet;
     int old_alpha = alpha;
@@ -1607,6 +1632,8 @@ static inline int negamax(int alpha, int beta, int depth) {
     moves move_list[1];
     move_list->count = 0;
     generate_moves(move_list);
+
+    sort_moves(move_list);
 
     for (int count = 0; count < move_list->count; count++) {
         copy_board();
@@ -1651,6 +1678,7 @@ static inline int negamax(int alpha, int beta, int depth) {
 void search_position(int depth) {
     int score = negamax(-50000, 50000, depth);
     if (best_move) {
+        printf("info score cp %d depth %d nodes %llu\n", score, depth, nodes);
         printf("bestmove ");
         print_move(best_move);
         printf("\n");
@@ -1774,12 +1802,16 @@ int main(void) {
      * generate captures function
      */
     // connect to gui
-    if (1) {
+    if (0) {
         parse_fen(tricky_position);
-        moves move_list[1];
-        move_list->count = 0;
-        generate_moves(move_list);
-        print_move_scores(move_list);
+        print_board();
+        search_position(1);
+
+        // moves move_list[1];
+        // move_list->count = 0;
+        // generate_moves(move_list);
+        // sort_moves(move_list);
+        // print_move_scores(move_list);
     }
     else {
         uci_loop();
