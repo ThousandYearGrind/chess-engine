@@ -903,8 +903,8 @@ void print_move_list(moves *move_list) {
     printf("\n\n    Total number of moves: %d\n\n", move_list->count);
 }
 
-// sizeof(bitboards) = 96 
-// sizeof(occupancies) = 24 
+// sizeof(bitboards) = 96
+// sizeof(occupancies) = 24
 
 #define copy_board() \
     U64 bitboards_copy[12], occupancies_copy[3]; \
@@ -922,13 +922,13 @@ enum { all_moves, only_captures };
 
 const int castling_rights[64] = {
     7, 15, 15, 15, 3, 15, 15, 11,
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    15, 15, 15, 15, 15, 15, 15, 15, 
-    13, 15, 15, 15, 12, 15, 15, 14, 
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    13, 15, 15, 15, 12, 15, 15, 14,
 };
 
 static inline int make_move(int move, int move_flag) {
@@ -1358,7 +1358,7 @@ int material_score[12] = {
     [bk] = -10000,
 };
 
-const int pawn_score[64] = 
+const int pawn_score[64] =
 {
     90,  90,  90,  90,  90,  90,  90,  90,
     30,  30,  30,  40,  40,  30,  30,  30,
@@ -1370,7 +1370,7 @@ const int pawn_score[64] =
      0,   0,   0,   0,   0,   0,   0,   0
 };
 
-const int knight_score[64] = 
+const int knight_score[64] =
 {
     -5,   0,   0,   0,   0,   0,   0,  -5,
     -5,   0,   0,  10,  10,   0,   0,  -5,
@@ -1382,7 +1382,7 @@ const int knight_score[64] =
     -5, -10,   0,   0,   0,   0, -10,  -5
 };
 
-const int bishop_score[64] = 
+const int bishop_score[64] =
 {
      0,   0,   0,   0,   0,   0,   0,   0,
      0,   0,   0,   0,   0,   0,   0,   0,
@@ -1408,7 +1408,7 @@ const int rook_score[64] =
 
 };
 
-const int king_score[64] = 
+const int king_score[64] =
 {
      0,   0,   0,   0,   0,   0,   0,   0,
      0,   0,   5,   5,   5,   5,   0,   0,
@@ -1521,6 +1521,11 @@ static int mvv_lva[12][12] = {
    100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600
 };
 
+// [id][ply]
+int killer_moves[2][64];
+// [piece][square]
+int history_moves[12][64];
+
 int ply = 0; // half move counter
 int best_move;
 
@@ -1528,7 +1533,7 @@ static inline int score_move(int move) {
     if (get_move_capture(move)) {
         int attack_piece = get_move_piece(move);
         int target_square = get_move_target(move);
-        int target_piece;
+        int target_piece = wp;
 
         int start_piece, end_piece;
         if (side == white) { start_piece = bp; end_piece = bk; }
@@ -1541,11 +1546,21 @@ static inline int score_move(int move) {
             }
         }
 
-        return mvv_lva[attack_piece][target_piece];
+        return mvv_lva[attack_piece][target_piece] + 10000;
     }
     else {
-        return 0;
+        // score 1st killer move
+        if (killer_moves[0][ply] == move)
+            return 9000;
+        // score 2nd killer move
+        else if (killer_moves[1][ply] == move)
+            return 8000;
+        // score history move
+        else
+            return history_moves[get_move_piece(move)]
+                                [get_move_target(move)];
     }
+    return 0;
 }
 
 static inline void sort_moves(moves *move_list) {
@@ -1651,10 +1666,18 @@ static inline int negamax(int alpha, int beta, int depth) {
         restore_board();
 
         if (score >= beta) {
+            if (!get_move_capture(move_list->moves[count])) {
+                killer_moves[1][ply] = killer_moves[0][ply];
+                killer_moves[0][ply] = move_list->moves[count];
+            }
             return beta;
         }
 
         if (score > alpha) {
+            if (get_move_capture(move_list->moves[count]) == 0) {
+                history_moves[get_move_piece(move_list->moves[count])]
+                            [get_move_target(move_list->moves[count])] += depth;
+            }
             alpha = score;
             if (ply == 0)
                 best_yet = move_list->moves[count];
@@ -1793,7 +1816,7 @@ void uci_loop() {
         }
     }
 }
-    
+
 int main(void) {
     init_attack_tables();
     /*
@@ -1805,13 +1828,7 @@ int main(void) {
     if (0) {
         parse_fen(tricky_position);
         print_board();
-        search_position(1);
-
-        // moves move_list[1];
-        // move_list->count = 0;
-        // generate_moves(move_list);
-        // sort_moves(move_list);
-        // print_move_scores(move_list);
+        search_position(5);
     }
     else {
         uci_loop();
