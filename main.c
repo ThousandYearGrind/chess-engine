@@ -1525,9 +1525,11 @@ static int mvv_lva[12][12] = {
 int killer_moves[2][64];
 // [piece][square]
 int history_moves[12][64];
+// triangular PV table
+int pv_length[64];
+int pv_table[64][64];
 
 int ply = 0; // half move counter
-int best_move;
 
 static inline int score_move(int move) {
     if (get_move_capture(move)) {
@@ -1633,6 +1635,9 @@ static inline int quiescence(int alpha, int beta) {
 }
 
 static inline int negamax(int alpha, int beta, int depth) {
+    // init PV length
+    pv_length[ply] = ply;
+
     if (depth == 0)
         return quiescence(alpha, beta);
 
@@ -1640,9 +1645,6 @@ static inline int negamax(int alpha, int beta, int depth) {
     int legal_moves = 0;
     int in_check = is_sq_attacked( get_lsb_index(bitboards[side == white ? wk : bk]), side ^ 1);
     if (in_check) depth++;
-
-    int best_yet;
-    int old_alpha = alpha;
 
     moves move_list[1];
     move_list->count = 0;
@@ -1679,8 +1681,12 @@ static inline int negamax(int alpha, int beta, int depth) {
                             [get_move_target(move_list->moves[count])] += depth;
             }
             alpha = score;
-            if (ply == 0)
-                best_yet = move_list->moves[count];
+            // write PV move to table
+            pv_table[ply][ply] = move_list->moves[count];
+            for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; next_ply++) {
+                pv_table[ply][next_ply] = pv_table[ply+1][next_ply];
+            }
+            pv_length[ply] = pv_length[ply + 1];
         }
     }
 
@@ -1691,21 +1697,21 @@ static inline int negamax(int alpha, int beta, int depth) {
             return 0;
     }
 
-    if (old_alpha != alpha) {
-        best_move = best_yet;
-    }
-
     return alpha;
 }
 
 void search_position(int depth) {
     int score = negamax(-50000, 50000, depth);
-    if (best_move) {
-        printf("info score cp %d depth %d nodes %llu\n", score, depth, nodes);
-        printf("bestmove ");
-        print_move(best_move);
-        printf("\n");
+    printf("info score cp %d depth %d nodes %llu ", score, depth, nodes);
+    // loop over moves in a PV line
+    for (int count = 0; count < pv_length[0]; count++) {
+        print_move(pv_table[0][count]);
+        printf(" ");
     }
+    printf("\n");
+    printf("bestmove ");
+    print_move(pv_table[0][0]);
+    printf("\n");
 }
 
 // universal chess interface
